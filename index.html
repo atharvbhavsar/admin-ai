@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdmitAI | Your Smart Admission & College Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; color: #f0f0f0; transition: background-color 0.5s ease; }
+        .page-container { display: none; }
+        .page-container.active { display: block; animation: fadeIn 0.6s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #page-index, #page-auth { background-color: #0a0a0a; }
+        #neural-network-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.15; transition: opacity 0.5s ease; }
+        .page-content { position: relative; z-index: 10; }
+        .hero-gradient-text { background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cta-button { transition: all 0.3s ease; }
+        .cta-button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(79, 70, 229, 0.4); }
+        .cta-button:disabled { background-color: #374151; color: #6b7280; cursor: not-allowed; }
+        .feature-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; border-radius: 1rem; }
+        .feature-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.1); border-color: rgba(79, 70, 229, 0.7); }
+        .scroll-animation { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        .scroll-animation.animate { opacity: 1; transform: translateY(0); }
+        .faq-item .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        .faq-item.open .faq-answer { max-height: 200px; }
+        .faq-item.open .faq-arrow { transform: rotate(180deg); }
+        #page-auth { background-color: #111827; }
+        .auth-card { background-color: #1f2937; border: 1px solid #374151; }
+        .form-input { background-color: #374151; border: 1px solid #4b5563; color: #d1d5db; }
+        .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4); }
+        .auth-section { display: none; }
+        .auth-section.active { display: block; animation: fadeIn 0.5s; }
+        .secondary-button { background-color: #374151; border: 1px solid #4b5563; transition: background-color 0.2s; }
+        .secondary-button:hover { background-color: #4b5563; }
+        .password-strength-meter { display: flex; gap: 2px; height: 4px; }
+        .strength-bar { flex-grow: 1; background-color: #374151; transition: background-color 0.3s; }
+        #page-dashboard { background-color: #f8fafc; }
+        .sidebar { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .sidebar-link { transition: background-color 0.2s, color 0.2s, border-left-color 0.2s; border-left: 3px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { background-color: #3b485e; border-left-color: #4f46e5; color: #ffffff; }
+        .dashboard-view { display: none; }
+        .dashboard-view.active { display: block; animation: fadeInDashboard 0.4s ease-in-out; }
+        @keyframes fadeInDashboard { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .exam-card, .college-card { transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); border-radius: 12px; overflow: hidden; }
+        .exam-card:hover, .college-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04); }
+        .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 1.5rem; }
+        .stats-card h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .stats-card p { opacity: 0.9; font-size: 0.875rem; }
+        .cutoff-table { 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 10px -2px rgb(0 0 0 / 0.04);
+            border: 1px solid #e5e7eb;
+        }
+        .cutoff-table th { 
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); 
+            font-weight: 700; 
+            color: white; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+        }
+        .cutoff-table td, .cutoff-table th { 
+            padding: 16px 20px; 
+            text-align: left; 
+            border-bottom: 1px solid #e5e7eb; 
+        }
+        .cutoff-table tr:hover { 
+            background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+        .cutoff-table tr:last-child td { border-bottom: none; }
+        .cutoff-table td:first-child { 
+            font-weight: 600; 
+            color: #1f2937;
+            background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        .cutoff-table td:not(:first-child) { 
+            font-weight: 500;
+            text-align: center;
+        }
+        .cutoff-value { 
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        .cutoff-high { background: linear-gradient(90deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; }
+        .cutoff-medium { background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%); color: #92400e; }
+        .cutoff-low { background: linear-gradient(90deg, #fee2e2 0%, #fecaca 100%); color: #dc2626; }
+        .fees-category { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .fees-general { background: #dbeafe; color: #1e40af; }
+        .fees-obc { background: #fef3c7; color: #92400e; }
+        .fees-sc { background: #fce7f3; color: #be185d; }
+        .fees-st { background: #dcfce7; color: #166534; }
+        .fees-ews { background: #f3e8ff; color: #7c3aed; }
+        .map-container { height: 300px; border-radius: 8px; overflow: hidden; }
+        .placement-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .placement-stat { background: #f8fafc; padding: 1rem; border-radius: 8px; text-align: center; }
+        .placement-stat h4 { font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.25rem; }
+        .placement-stat p { color: #6b7280; font-size: 0.875rem; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .gemini-loading { display: flex; align-items: center; gap: 0.5rem; color: #6b7280; font-size: 0.875rem; }
+        .white-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; margin-bottom: 1rem; }
+        .white-card h3 { color: #1f2937; font-weight: 700; margin-bottom: 1rem; }
+        .white-card p { color: #6b7280; line-height: 1.6; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .hover-lift { transition: all 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1); }
+        .text-gradient { background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .border-gradient { border: 2px solid transparent; background: linear-gradient(white, white) padding-box, linear-gradient(90deg, #4f46e5, #ec4899) border-box; }
+        
+        /* AI Chat Assistant Styles */
+        .ai-chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .ai-chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
+        }
+        .ai-chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        }
+        .ai-chat-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        .ai-chat-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ai-chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        .ai-message {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 15px 15px 15px 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+        }
+        .user-message {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 15px 15px 5px 15px;
+            margin-bottom: 10px;
+            margin-left: auto;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+        }
+        .ai-chat-input {
+            padding: 15px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+        .ai-chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            outline: none;
+        }
+        .ai-chat-input button {
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        /* AI Recommendation Styles */
+        .ai-recommendation {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #4f46e5;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-recommendation::before {
+            content: "🤖 AI Recommendation";
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .ai-recommendation h4 {
+            color: #1f2937;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .ai-recommendation p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="neural-network-canvas"></canvas>
+
+    <!-- LANDING PAGE -->
+    <div id="page-index" class="page-container"><div class="page-content"><header class="sticky top-0 left-0 w-full bg-black/50 backdrop-blur-lg z-50"><div class="container mx-auto px-6 py-4 flex justify-between items-center"><h1 class="text-xl font-bold text-white">AdmitAI</h1><div class="flex items-center space-x-4"><select id="language-switcher-index" class="language-switcher bg-gray-800 border border-gray-700 text-white text-sm rounded-lg"></select><a href="#auth/auth-choice-section" class="cta-button bg-indigo-600 text-white px-4 py-2 rounded-md nav-link" id="header-get-started"></a></div></div></header><main><section class="min-h-screen flex items-center pt-24 pb-12"><div class="container mx-auto px-6 text-center"><div class="max-w-4xl mx-auto"><h2 id="hero-title" class="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-6"></h2><p id="hero-subtitle" class="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto"></p><a href="#auth/auth-choice-section" class="cta-button bg-indigo-600 text-white font-semibold px-8 py-4 rounded-md text-lg nav-link" id="hero-cta"></a></div></div></section><section class="py-12 bg-black/20"><div class="container mx-auto px-6 text-center"><h3 id="social-proof-title" class="text-sm font-bold text-gray-500 uppercase tracking-widest"></h3><div class="mt-6 flex flex-wrap justify-center items-center gap-x-8 md:gap-x-12 grayscale opacity-60 text-white"><p class="font-semibold text-lg">Global University</p><p class="font-semibold text-lg">Future Tech Institute</p><p class="font-semibold text-lg">City College</p><p class="font-semibold text-lg">State Board Toppers</p></div></div></section><section class="py-20"><div class="container mx-auto px-6"><div class="text-center mb-12"><h3 id="features-title" class="text-4xl font-bold text-white scroll-animation"></h3><p id="features-subtitle" class="text-gray-400 mt-2 scroll-animation" style="transition-delay: 150ms;"></p></div><div id="features-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div></section><section class="py-20 bg-gray-900/50"><div class="container mx-auto px-6"><div class="text-center mb-12"><h3 id="testimonials-title" class="text-4xl font-bold text-white scroll-animation"></h3></div><div id="testimonials-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div></section><section class="py-20"><div class="container mx-auto px-6 max-w-3xl"><div class="text-center mb-12"><h3 id="faq-title" class="text-4xl font-bold text-white scroll-animation"></h3></div><div id="faq-container" class="space-y-4"></div></div></section><section class="py-24 text-center"><h3 id="cta-title" class="text-3xl md:text-4xl font-bold text-white"></h3><p id="cta-subtitle" class="text-gray-400 mt-4 mb-8 max-w-xl mx-auto"></p><a href="#auth/auth-choice-section" class="cta-button bg-indigo-600 text-white font-semibold px-10 py-4 rounded-md text-lg nav-link" id="cta-button"></a></section></main><footer class="border-t border-white/10 py-8"><p class="text-center text-gray-500">© 2025 AdmitAI. All rights reserved.</p></footer></div></div>
+    <!-- AUTHENTICATION PAGE -->
+    <div id="page-auth" class="page-container"><div class="page-content flex flex-col items-center justify-center min-h-screen p-4"><header class="absolute top-0 left-0 w-full p-4"><div class="container mx-auto flex justify-between items-center"><a href="#index" class="text-xl font-bold text-white nav-link">AdmitAI</a><select id="language-switcher-auth" class="language-switcher bg-gray-800 border border-gray-700 text-white text-sm rounded-lg"></select></div></header><div class="max-w-md w-full"><div id="auth-choice-section" class="auth-section auth-card p-8 rounded-xl shadow-2xl"><div class="text-center"><h2 id="auth-choice-title" class="text-2xl font-bold text-white mb-2"></h2><p id="auth-choice-subtitle" class="text-gray-400 mb-8"></p><div class="space-y-4"><button class="cta-button w-full text-white font-semibold py-3 rounded-md auth-switcher" data-target="sign-up-section" id="auth-choice-signup-btn"></button><button class="secondary-button w-full text-white font-semibold py-3 rounded-md auth-switcher" data-target="sign-in-section" id="auth-choice-signin-btn"></button></div></div></div><div id="sign-in-section" class="auth-section auth-card p-8 rounded-xl shadow-2xl"><button class="text-gray-400 mb-4 hover:text-white auth-switcher" data-target="auth-choice-section">← <span id="back-to-choice-text1"></span></button><div class="text-center mb-8"><h2 id="signin-title" class="text-2xl font-bold text-white"></h2></div><form id="sign-in-form" class="auth-flow-form" data-target="personal-info-section"><div class="space-y-6"><div><label id="signin-email-label" for="email_signin" class="text-sm font-medium text-gray-300"></label><input name="email" type="email" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="you@example.com"></div><div class="relative"><label id="signin-password-label" for="password_signin" class="text-sm font-medium text-gray-300"></label><input name="password" type="password" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="••••••••"><button type="button" class="password-toggle absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-400"></button></div></div><div class="mt-8"><button id="signin-button" type="submit" class="cta-button w-full text-white font-semibold py-3 rounded-md"></button></div></form></div><div id="sign-up-section" class="auth-section auth-card p-8 rounded-xl shadow-2xl"><button class="text-gray-400 mb-4 hover:text-white auth-switcher" data-target="auth-choice-section">← <span id="back-to-choice-text2"></span></button><div class="text-center mb-6"><h2 id="signup-title-1" class="text-2xl font-bold text-white"></h2></div><form id="sign-up-form" class="auth-flow-form" data-target="personal-info-section"><div class="space-y-4"><div><label id="signup-email-label" for="email_signup" class="text-sm font-medium text-gray-300"></label><input name="email" type="email" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="you@example.com"></div><div class="relative"><label id="signup-password-label" for="password_signup" class="text-sm font-medium text-gray-300"></label><input name="password" type="password" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="••••••••"><button type="button" class="password-toggle absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-400"></button></div><div><div class="password-strength-meter mt-2"> <div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div></div><p id="password-strength-text" class="text-xs text-gray-400 mt-1"></p></div><div class="relative"><label id="signup-confirm-password-label" for="confirm_password_signup" class="text-sm font-medium text-gray-300"></label><input name="confirm_password" type="password" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="••••••••"><button type="button" class="password-toggle absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-400"></button></div><p id="password-match-error" class="text-xs text-red-500 hidden"></p></div><div class="pt-4"><button id="signup-continue-btn" type="submit" class="cta-button w-full text-white font-semibold py-3 rounded-md"></button></div></form></div><div id="personal-info-section" class="auth-section auth-card p-8 rounded-xl shadow-2xl"><div class="text-center mb-6"><h2 id="personal-info-title" class="text-2xl font-bold text-white"></h2><p id="personal-info-subtitle" class="text-gray-400"></p></div><form id="personal-info-form"><div class="space-y-4"><div><label id="signup-name-label" for="fullName" class="text-sm font-medium text-gray-300"></label><input type="text" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="e.g. Rohan Sharma"></div><div><label id="signup-phone-label" for="phone" class="text-sm font-medium text-gray-300"></label><input type="tel" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="e.g. 9876543210"></div><div><label id="signup-city-label" for="city" class="text-sm font-medium text-gray-300"></label><input type="text" required class="form-input w-full p-3 mt-1 rounded-md" placeholder="e.g. Mumbai"></div></div><div class="pt-4"><button id="open-dashboard-btn" type="submit" class="cta-button w-full text-white font-semibold py-3 rounded-md"></button></div></form></div></div></div></div>
+
+    <!-- DASHBOARD SHELL -->
+    <div id="page-dashboard" class="page-container">
+        <div class="flex h-screen">
+            <aside class="sidebar w-64 text-gray-400 p-4 flex-shrink-0 flex flex-col">
+                <div class="flex items-center mb-10 flex-shrink-0"><div class="bg-indigo-600 w-10 h-10 rounded-lg mr-3 flex items-center justify-center text-white font-bold text-xl">A</div><div><h1 class="font-bold text-white text-lg">AdmitAI</h1></div></div>
+                <nav id="sidebar-nav" class="flex flex-col space-y-2"></nav>
+                <div class="mt-auto flex-shrink-0"><a href="#index" class="sidebar-link px-4 py-3 rounded-lg block nav-link"><span id="nav-logout"></span></a></div>
+            </aside>
+            <main class="flex-1 flex flex-col overflow-y-auto">
+                <!-- Main Dashboard View -->
+                <div id="view-main-dashboard" class="dashboard-view">
+                    <header class="bg-white border-b p-4">
+                        <h2 id="dashboard-title" class="text-2xl font-bold text-gray-800"></h2>
+                    </header>
+                    <div class="p-6">
+                        <div class="bg-gradient-to-r from-pink-500 to-orange-400 text-white p-8 rounded-xl shadow-lg mb-6">
+                            <h3 id="welcome-title" class="text-3xl font-bold"></h3>
+                            <p id="welcome-subtitle" class="mt-1 opacity-90"></p>
+                        </div>
+                        <div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"></div>
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <p id="chat-prompt" class="text-gray-700 text-lg"></p>
+                        </div>
+                        
+                        <!-- AI Status Alert -->
+                        <div id="ai-status-alert" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">
+                                        AI Assistant Status
+                                    </h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <p id="ai-status-message">
+                                            The AI assistant is currently not available. Please check the configuration.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Course Finder View -->
+                <div id="view-course-finder" class="dashboard-view"><header class="bg-white border-b p-4 flex items-center"><button class="text-gray-500 hover:text-gray-900 mr-4 dashboard-nav-link p-2 rounded-full hover:bg-gray-100" data-target="main-dashboard" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg></button><h2 id="course-finder-title" class="text-2xl font-bold text-gray-800"></h2></header><div id="exam-categories-container" class="p-6 space-y-8"></div></div>
+                <!-- College Listings View -->
+                <div id="view-college-listings" class="dashboard-view"><header class="bg-white border-b p-4 flex items-center"><button class="text-gray-500 hover:text-gray-900 mr-4 dashboard-nav-link p-2 rounded-full hover:bg-gray-100" data-target="course-finder" title="Back to Exams"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg></button><h2 id="college-listings-title" class="text-2xl font-bold text-gray-800"></h2></header><div class="p-6"><div class="mb-6 flex flex-col md:flex-row gap-4 justify-between"><div class="flex items-center space-x-2"><label id="filter-by-city-label" for="city-filter" class="text-sm font-medium text-gray-700"></label><select id="city-filter" class="form-input bg-white text-gray-900 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></select></div><div class="flex items-center space-x-2"><label for="search-college" class="text-sm font-medium text-gray-700">Search:</label><input type="text" id="search-college" placeholder="Search colleges..." class="form-input bg-white text-gray-900 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div></div><div id="college-cards-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div></div></div>
+                
+                <!-- Exam Details View -->
+                <div id="view-exam-details" class="dashboard-view">
+                    <header class="bg-white border-b p-4 flex items-center">
+                        <button class="text-gray-500 hover:text-gray-900 mr-4 dashboard-nav-link p-2 rounded-full hover:bg-gray-100" data-target="course-finder" title="Back to Exams">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
+                        <h2 id="exam-details-title" class="text-2xl font-bold text-gray-800"></h2>
+                    </header>
+                    <div class="p-6">
+                        <div id="exam-details-content" class="space-y-8"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- College Details Modal -->
+    <div id="college-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 id="modal-college-name" class="text-2xl font-bold text-gray-900"></h3>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="modal-college-content" class="space-y-6"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Assistant Widget -->
+    <div class="ai-chat-widget">
+        <button class="ai-chat-button" id="ai-chat-toggle">🤖</button>
+        <div class="ai-chat-window" id="ai-chat-window">
+            <div class="ai-chat-header">
+                <span>AdmitAI Assistant</span>
+                <button id="ai-chat-close" class="text-white">✕</button>
+            </div>
+            <div class="ai-chat-messages" id="ai-chat-messages">
+                <div class="ai-message">
+                    Hello! I'm your AdmitAI assistant. 🤖 I can help you with:
+                    <br>• College recommendations based on your MHT-CET/JEE/BITSAT scores
+                    <br>• Detailed cutoff trends and admission chances
+                    <br>• Fee structure and scholarship information
+                    <br>• Placement statistics and career guidance
+                    <br>• Exam preparation strategies
+                    <br>• Hostel facilities and campus life
+                    <br><br>Ask me anything about college admissions!
+                </div>
+            </div>
+            <div class="ai-chat-input">
+                <input type="text" id="ai-chat-input" placeholder="Ask me anything...">
+                <button id="ai-chat-send">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ----------- 1. TRANSLATIONS & DATA OBJECT -----------
+    const translations = {
+        languages: { en: 'English', hi: 'हिंदी', mr: 'मराठी' },
+        index: {
+            heroTitle: { en: 'Find Your Future College, <span class="hero-gradient-text">Instantly.</span>', hi: 'अपना भविष्य का कॉलेज खोजें, <span class="hero-gradient-text">तुरंत।</span>', mr: 'तुमचे भविष्यातील महाविद्यालय शोधा, <span class="hero-gradient-text">झटपट.</span>' },
+            heroSubtitle: { en: 'Our AI-powered assistant analyzes your profile to recommend the perfect colleges for you after your 12th grade.', hi: 'हमारा AI-संचालित सहायक आपकी 12वीं के बाद आपके लिए सही कॉलेजों की सिफारिश करने के लिए आपकी प्रोफ़ाइल का विश्लेषण करता है।', mr: 'आमचे AI-चालित सहाय्यक तुमच्या १२वी नंतर तुमच्यासाठी योग्य महाविद्यालयांची शिफारस करण्यासाठी तुमच्या प्रोफाइलचे विश्लेषण करते.' },
+            heroCTA: { en: 'Start For Free', hi: 'मुफ्त में शुरू करें', mr: 'विनामूल्य प्रारंभ करा' },
+            headerGetStarted: { en: 'Get Started', hi: 'शुरू करें', mr: 'सुरु करा' },
+            socialProofTitle: { en: 'Trusted by Students from Leading Institutions', hi: 'प्रमुख संस्थानों के छात्रों द्वारा विश्वसनीय', mr: 'प्रमुख संस्थांमधील विद्यार्थ्यांद्वारे विश्वसनीय' },
+            featuresTitle: { en: 'Everything You Need For Your Next Step', hi: 'आपके अगले कदम के लिए सब कुछ', mr: 'तुमच्या पुढच्या पावलासाठी सर्वकाही' },
+            featuresSubtitle: { en: 'Powerful tools designed to simplify your admission journey.', hi: 'आपकी प्रवेश यात्रा को सरल बनाने के लिए डिज़ाइन किए गए शक्तिशाली उपकरण।', mr: 'तुमचा प्रवेश प्रवास सोपा करण्यासाठी डिझाइन केलेली शक्तिशाली साधने.' },
+            testimonialsTitle: { en: 'What Students Say About Us', hi: 'छात्र हमारे बारे में क्या कहते हैं', mr: 'विद्यार्थी आमच्याबद्दल काय म्हणतात' },
+            faqTitle: { en: 'Frequently Asked Questions', hi: 'अक्सर पूछे जाने वाले प्रश्न', mr: 'सतत विचारले जाणारे प्रश्न' },
+            ctaTitle: { en: 'Ready to Find Your Dream College?', hi: 'क्या आप अपना सपनों का कॉलेज खोजने के लिए तैयार हैं?', mr: 'तुमचे स्वप्नातील महाविद्यालय शोधण्यासाठी तयार आहात का?' },
+            ctaSubtitle: { en: 'Create your free account and get personalized college recommendations in minutes.', hi: 'अपना मुफ्त खाता बनाएं और मिनटों में व्यक्तिगत कॉलेज सिफारिशें प्राप्त करें।', mr: 'तुमचे विनामूल्य खाते तयार करा आणि काही मिनिटांत वैयक्तिकृत महाविद्यालय शिफारसी मिळवा.' },
+            ctaButton: { en: 'Get My Free Recommendations', hi: 'मेरी मुफ्त सिफारिशें प्राप्त करें', mr: 'माझ्या मोफत शिफारसी मिळवा' },
+            features: [ { title: { en: 'Personalized Recommendations', hi: 'व्यक्तिगत सिफारिशें', mr: 'वैयक्तिकृत शिफारसी' }, desc: { en: 'Get a curated list of colleges based on your marks, interests, and location.', hi: 'अपने अंक, रुचियों और स्थान के आधार पर कॉलेजों की एक क्यूरेटेड सूची प्राप्त करें।', mr: 'तुमचे गुण, आवड आणि स्थानावर आधारित महाविद्यालयांची क्युरेट केलेली यादी मिळवा.' } }, { title: { en: 'Eligibility Checker', hi: 'पात्रता परीक्षक', mr: 'पात्रता तपासक' }, desc: { en: 'Instantly check if you meet the admission criteria for thousands of courses.', hi: 'हजारों पाठ्यक्रमों के लिए प्रवेश मानदंड पूरा करते हैं या नहीं, तुरंत जांचें।', mr: 'हजारो अभ्यासक्रमांसाठी प्रवेशाचे निकष तुम्ही पूर्ण करता की नाही हे त्वरित तपासा.' } }, { title: { en: '24/7 AI Counselor', hi: '24/7 एआई काउंसलर', mr: '२४/७ एआय समुपदेशक' }, desc: { en: 'Ask any question about admissions, fees, or deadlines, anytime you want.', hi: 'प्रवेश, शुल्क, या समय सीमा के बारे में कोई भी प्रश्न पूछें, कभी भी।', mr: 'प्रवेश, शुल्क, किंवा अंतिम मुदतीबद्दल कोणताही प्रश्न विचारा, कधीही.' } } ],
+            testimonials: [ { quote: { en: "AdmitAI made my college search so easy! I found the perfect engineering college in Pune within a day.", hi: "AdmitAI ने मेरी कॉलेज खोज को इतना आसान बना दिया! मुझे एक दिन के भीतर पुणे में सही इंजीनियरिंग कॉलेज मिल गया।", mr: "AdmitAI ने माझा कॉलेज शोध खूप सोपा केला! मला एका दिवसात पुण्यातील योग्य अभियांत्रिकी महाविद्यालय सापडले." }, name: "Priya S." }, { quote: { en: "The eligibility checker is a lifesaver. I knew exactly which colleges I could apply to with my CET score.", hi: "पात्रता परीक्षक एक जीवनरक्षक है। मुझे ठीक-ठीक पता था कि मैं अपने CET स्कोर के साथ किन कॉलेजों में आवेदन कर सकता हूं।", mr: "पात्रता तपासक एक जीवनरक्षक आहे. मला माझ्या CET स्कोरसह कोणत्या महाविद्यालयांमध्ये अर्ज करता येईल हे नक्की माहित होते." }, name: "Amit K." }, { quote: { en: "A must-have tool for any 12th-grade student in Maharashtra. Highly recommended!", hi: "महाराष्ट्र में किसी भी 12वीं कक्षा के छात्र के लिए एक आवश्यक उपकरण। अत्यधिक अनुशंसित!", mr: "महाराष्ट्रातील कोणत्याही १२वीच्या विद्यार्थ्यासाठी एक आवश्यक साधन. अत्यंत शिफारसीय आहे!" }, name: "Rohan M." } ],
+            faqs: [ { q: { en: 'Is this service free?', hi: 'क्या यह सेवा मुफ्त है?', mr: 'ही सेवा विनामूल्य आहे का?' }, a: { en: 'Yes, our basic college finder and recommendation service is completely free to use.', hi: 'हाँ, हमारी मूल कॉलेज खोजक और सिफारिश सेवा उपयोग करने के लिए पूरी तरह से मुफ्त है।', mr: 'होय, आमची मूलभूत महाविद्यालय शोधक आणि शिफारस सेवा वापरण्यासाठी पूर्णपणे विनामूल्य आहे.' } }, { q: { en: 'Which entrance exams do you support?', hi: 'आप कौन सी प्रवेश परीक्षाओं का समर्थन करते हैं?', mr: 'तुम्ही कोणत्या प्रवेश परीक्षांना समर्थन देता?' }, a: { en: 'We support a wide range of exams including MHT-CET, JEE Mains, and NEET for accurate recommendations.', hi: 'हम सटीक सिफारिशों के लिए MHT-CET, JEE Mains, और NEET सहित कई परीक्षाओं का समर्थन करते हैं।', mr: 'आम्ही अचूक शिफारसींसाठी MHT-CET, JEE Mains, आणि NEET यासह विस्तृत परीक्षांना समर्थन देतो.' } } ]
+        },
+        auth: {
+            authChoiceTitle: { en: 'Join Us', hi: 'हमसे जुड़ें', mr: 'आमच्यात सामील व्हा' },
+            authChoiceSubtitle: { en: 'Choose your path to get started.', hi: 'शुरू करने के लिए अपना रास्ता चुनें।', mr: 'सुरू करण्यासाठी तुमचा मार्ग निवडा.' },
+            authChoiceSignup: { en: 'Sign Up', hi: 'साइन अप करें', mr: 'साइन अप करा' },
+            authChoiceSignin: { en: 'Sign In', hi: 'साइन इन करें', mr: 'साइन इन करा' },
+            backToChoice: { en: 'Back', hi: 'वापस', mr: 'मागे' },
+            signInTitle: { en: 'Sign In to Your Account', hi: 'अपने खाते में साइन इन करें', mr: 'तुमच्या खात्यात साइन इन करा' },
+            emailLabel: { en: 'Email Address', hi: 'ईमेल पता', mr: 'ईमेल पत्ता' },
+            passwordLabel: { en: 'Password', hi: 'पासवर्ड', mr: 'पासवर्ड' },
+            confirmPasswordLabel: {en: 'Confirm Password', hi: 'पासवर्ड की पुष्टि कीजिये', mr: 'पासवर्डची पुष्टी करा'},
+            signInButton: { en: 'Sign In & Continue', hi: 'साइन इन करें और जारी रखें', mr: 'साइन इन करा आणि सुरू ठेवा' },
+            signUpTitle1: { en: 'Create Your Account', hi: 'अपना खाता बनाएं', mr: 'तुमचे खाते तयार करा' },
+            signUpContinueBtn: { en: 'Create Account & Continue', hi: 'खाता बनाएं और जारी रखें', mr: 'खाते तयार करा आणि सुरू ठेवा' },
+            personalInfoTitle: { en: 'Almost There!', hi: 'बस लगभग हो गया!', mr: 'जवळजवळ पूर्ण झाले!' },
+            personalInfoSubtitle: { en: 'We just need a few more details to personalize your experience.', hi: 'आपके अनुभव को व्यक्तिगत बनाने के लिए हमें बस कुछ और विवरण चाहिए।', mr: 'तुमचा अनुभव वैयक्तिकृत करण्यासाठी आम्हाला फक्त काही अधिक तपशील हवे आहेत.' },
+            nameLabel: { en: 'Full Name', hi: 'पूरा नाम', mr: 'पूर्ण नाव' },
+            phoneLabel: { en: 'Mobile Number', hi: 'मोबाइल नंबर', mr: 'मोबाईल नंबर' },
+            cityLabel: { en: 'Current City', hi: 'वर्तमान शहर', mr: 'सध्याचे शहर' },
+            openDashboard: { en: 'Open Dashboard', hi: 'डैशबोर्ड खोलें', mr: 'डॅशबोर्ड उघडा' },
+            passStrength: { weak: {en:'Weak', hi: 'कमजोर', mr:'कमकुवत'}, fair: {en:'Fair', hi: 'ठीक', mr:'ठीक'}, good: {en:'Good', hi: 'अच्छा', mr:'चांगला'}, strong: {en:'Strong', hi: 'मजबूत', mr:'मजबूत'} },
+            passMatchError: {en: 'Passwords do not match!', hi: 'पासवर्ड मेल नहीं खाते!', mr: 'पासवर्ड जुळत नाहीत!'}
+        },
+        dashboard: {
+            nav: [ { id: 'main-dashboard', text: { en: 'Chat Assistant', hi: 'चैट सहायक', mr: 'चॅट सहाय्यक' } }, { id: 'course-finder', text: { en: 'Course Finder', hi: 'कोर्स खोजक', mr: 'कोर्स शोधक' } } ],
+            navLogout: { en: 'Logout', hi: 'लॉग आउट', mr: 'लॉग आउट' },
+            dashboardTitle: { en: 'AI Admission Assistant', hi: 'एआई प्रवेश सहायक', mr: 'एआय प्रवेश सहाय्यक' },
+            welcomeTitle: { en: 'Welcome to AdmitAI! 🎓', hi: 'एडमिटएआई में आपका स्वागत है! 🎓', mr: 'एडमिटएआय मध्ये आपले स्वागत आहे! 🎓' },
+            welcomeSubtitle: { en: 'Your intelligent admission assistant is here to help you 24/7', hi: 'आपका बुद्धिमान प्रवेश सहायक 24/7 आपकी मदद करने के लिए यहां है', mr: 'तुमचे बुद्धिमान प्रवेश सहाय्यक तुम्हाला 24/7 मदत करण्यासाठी येथे आहे' },
+            cards: [ { id: 'course-finder', title: { en: 'Find Courses', hi: 'कोर्स खोजें', mr: 'कोर्स शोधा' }, desc: { en: 'Discover programs that match your interests', hi: 'अपनी रुचियों से मेल खाने वाले कार्यक्रम खोजें', mr: 'तुमच्या आवडीनुसार जुळणारे प्रोग्राम शोधा' } }, { id: 'eligibility', title: { en: 'Check Eligibility', hi: 'पात्रता जांचें', mr: 'पात्रता तपासा' }, desc: { en: 'Verify if you meet admission requirements', hi: 'सत्यापित करें कि क्या आप प्रवेश आवश्यकताओं को पूरा करते हैं', mr: 'तुम्ही प्रवेशाची आवश्यकता पूर्ण करता की नाही हे सत्यापित करा' } }, { id: 'dates', title: { en: 'Important Dates', hi: 'महत्वपूर्ण तिथियां', mr: 'महत्वाच्या तारखा' }, desc: { en: 'Never miss application deadlines', hi: 'आवेदन की समय सीमा कभी न चूकें', mr: 'अर्ज करण्याची अंतिम मुदत कधीही चुकवू नका' } }, { id: 'fees', title: { en: 'Fees & Scholarships', hi: 'शुल्क और छात्रवृत्ति', mr: 'शुल्क आणि शिष्यवृत्ती' }, desc: { en: 'Get financial information and aid options', hi: 'वित्तीय जानकारी और सहायता विकल्प प्राप्त करें', mr: 'आर्थिक माहिती आणि मदत पर्याय मिळवा' } } ],
+            chatPrompt: { en: "Hi! I'm your AI admission assistant. I can help you with course recommendations, eligibility checks, and more.", hi: 'नमस्ते! मैं आपका एआई प्रवेश सहायक हूं। मैं कोर्स की सिफारिशों, पात्रता जांच, और बहुत कुछ में आपकी मदद कर सकता हूं।', mr: 'नमस्कार! मी तुमचा एआय प्रवेश सहाय्यक आहे. मी कोर्स शिफारसी, पात्रता तपासणी आणि बरेच काही मध्ये तुम्हाला मदत करू शकेन.' }
+        },
+        courseFinder: {
+            title: {en: 'Find Colleges by Entrance Exam', hi: 'प्रवेश परीक्षा द्वारा कॉलेज खोजें', mr: 'प्रवेश परीक्षेनुसार महाविद्यालये शोधा'},
+            categories: [
+                { name: {en: 'National Level Exams', hi: 'राष्ट्रीय स्तर की परीक्षाएं', mr: 'राष्ट्रीय स्तरावरील परीक्षा'}, exams: [ { id: 'jee-main', name: 'JEE Main', fullName: {en: 'Joint Entrance Examination Main', hi: 'संयुक्त प्रवेश परीक्षा मुख्य', mr: 'संयुक्त प्रवेश परीक्षा मुख्य'}, desc: {en: 'For NITs, IIITs, and other Centrally Funded Technical Institutions.', hi: 'एनआईटी, आईआईआईटी और अन्य केंद्रीय वित्तपोषित तकनीकी संस्थानों के लिए।', mr: 'एनआयटी, आयआयआयटी आणि इतर केंद्र पुरस्कृत तांत्रिक संस्थांसाठी.'} } ] },
+                { name: {en: 'State Level Exams', hi: 'राज्य स्तरीय परीक्षाएं', mr: 'राज्यस्तरीय परीक्षा'}, exams: [ { id: 'mht-cet', name: 'MHT-CET', fullName: {en: 'Maharashtra Common Entrance Test', hi: 'महाराष्ट्र कॉमन एंट्रेंस टेस्ट', mr: 'महाराष्ट्र कॉमन एंट्रन्स टेस्ट'}, desc: {en: 'For engineering, pharmacy, and agriculture colleges in Maharashtra.', hi: 'महाराष्ट्र में इंजीनियरिंग, फार्मेसी और कृषि कॉलेजों के लिए।', mr: 'महाराष्ट्रातील अभियांत्रिकी, फार्मसी आणि कृषी महाविद्यालयांसाठी.'} } ] },
+                { name: {en: 'Institution Specific Exams', hi: 'संस्थान विशिष्ट परीक्षाएं', mr: 'संस्था विशिष्ट परीक्षा'}, exams: [ { id: 'bitsat', name: 'BITSAT', fullName: {en: 'BITS Admission Test', hi: 'बिट्स एडमिशन टेस्ट', mr: 'बिट्स ऍडमिशन टेस्ट'}, desc: {en: 'For admission to BITS Pilani, Goa, and Hyderabad campuses.', hi: 'बिट्स पिलानी, गोवा और हैदराबाद परिसरों में प्रवेश के लिए।', mr: 'बिट्स पिलानी, गोवा आणि हैदराबाद कॅम्पसमध्ये प्रवेशासाठी.'} } ] }
+            ],
+            viewCollegesBtn: {en: 'View Colleges', hi: 'कॉलेज देखें', mr: 'महाविद्यालये पहा'}
+        },
+        collegeListings: {
+            title: {en: 'Colleges Accepting', hi: 'स्वीकार करने वाले कॉलेज', mr: 'स्वीकार करणारी महाविद्यालये'},
+            filterLabel: {en: 'Filter by City:', hi: 'शहर से फ़िल्टर करें:', mr: 'शहरानुसार फिल्टर करा:'},
+            allCities: {en: 'All Cities', hi: 'सभी शहर', mr: 'सर्व शहरे'},
+            viewDetailsBtn: {en: 'View Details', hi: 'विवरण देखें', mr: 'तपशील पहा'},
+            highestPackage: {en: 'Highest Pkg', hi: 'उच्चतम पैकेज', mr: 'सर्वोच्च पॅकेज'},
+            averagePackage: {en: 'Average Pkg', hi: 'औसत पैकेज', mr: 'सरासरी पॅकेज'},
+            intake: {en: 'Intake', hi: 'प्रवेश क्षमता', mr: 'प्रवेश क्षमता'},
+            searchPlaceholder: {en: 'Search colleges...', hi: 'कॉलेज खोजें...', mr: 'महाविद्यालये शोधा...'},
+            searchLabel: {en: 'Search:', hi: 'खोजें:', mr: 'शोधा:'},
+            nirfRank: {en: 'NIRF Rank', hi: 'NIRF रैंक', mr: 'NIRF रँक'},
+            fees: {en: 'Fees', hi: 'शुल्क', mr: 'शुल्क'},
+            cutoff: {en: 'Cutoff', hi: 'कटऑफ', mr: 'कटऑफ'},
+            courses: {en: 'Courses', hi: 'पाठ्यक्रम', mr: 'अभ्यासक्रम'},
+            website: {en: 'Website', hi: 'वेबसाइट', mr: 'वेबसाइट'},
+            phone: {en: 'Phone', hi: 'फोन', mr: 'फोन'},
+            address: {en: 'Address', hi: 'पता', mr: 'पत्ता'},
+            closeModal: {en: 'Close', hi: 'बंद करें', mr: 'बंद करा'},
+            cutoffTrends: {en: 'Cutoff Trends (Last 3 Years)', hi: 'कटऑफ ट्रेंड्स (पिछले 3 वर्ष)', mr: 'कटऑफ ट्रेंड्स (मागील ३ वर्षे)'},
+            feeStructure: {en: 'Fee Structure', hi: 'शुल्क संरचना', mr: 'शुल्क संरचना'},
+            hostelFacilities: {en: 'Hostel & Facilities', hi: 'छात्रावास और सुविधाएं', mr: 'छात्रावास आणि सुविधा'},
+            placementStats: {en: 'Placement Statistics', hi: 'प्लेसमेंट आंकड़े', mr: 'प्लेसमेंट आकडेवारी'},
+            courseIntake: {en: 'Course Intake', hi: 'पाठ्यक्रम प्रवेश', mr: 'अभ्यासक्रम प्रवेश'},
+            location: {en: 'Location', hi: 'स्थान', mr: 'स्थान'},
+            viewOnMaps: {en: 'View on Google Maps', hi: 'Google Maps पर देखें', mr: 'Google Maps वर पहा'},
+            loading: {en: 'Loading...', hi: 'लोड हो रहा है...', mr: 'लोड होत आहे...'},
+            realTimeData: {en: 'Real-time data', hi: 'रीयल-टाइम डेटा', mr: 'रीयल-टाइम डेटा'}
+        },
+        examDetails: {
+            title: {en: 'Exam Details', hi: 'परीक्षा विवरण', mr: 'परीक्षा तपशील'},
+            eligibility: {en: 'Eligibility', hi: 'पात्रता', mr: 'पात्रता'},
+            examDate: {en: 'Exam Date', hi: 'परीक्षा तिथि', mr: 'परीक्षा तारीख'},
+            applicationDeadline: {en: 'Application Deadline', hi: 'आवेदन की अंतिम तिथि', mr: 'अर्जाची अंतिम तारीख'},
+            examDuration: {en: 'Exam Duration', hi: 'परीक्षा अवधि', mr: 'परीक्षा कालावधी'},
+            totalQuestions: {en: 'Total Questions', hi: 'कुल प्रश्न', mr: 'एकूण प्रश्न'},
+            subjects: {en: 'Subjects', hi: 'विषय', mr: 'विषय'},
+            markingScheme: {en: 'Marking Scheme', hi: 'अंकन योजना', mr: 'गुणांकन योजना'},
+            examMode: {en: 'Exam Mode', hi: 'परीक्षा मोड', mr: 'परीक्षा मोड'},
+            examCenters: {en: 'Exam Centers', hi: 'परीक्षा केंद्र', mr: 'परीक्षा केंद्रे'},
+            applicationFee: {en: 'Application Fee', hi: 'आवेदन शुल्क', mr: 'अर्ज शुल्क'},
+            resultDate: {en: 'Result Date', hi: 'परिणाम तिथि', mr: 'निकाल तारीख'},
+            counselingRounds: {en: 'Counseling Rounds', hi: 'काउंसलिंग राउंड', mr: 'सल्लागार फेरी'},
+            importantDates: {en: 'Important Dates', hi: 'महत्वपूर्ण तिथियां', mr: 'महत्वाच्या तारखा'},
+            preparationTips: {en: 'Preparation Tips', hi: 'तैयारी के टिप्स', mr: 'तयारी टिप्स'},
+            event: {en: 'Event', hi: 'कार्यक्रम', mr: 'कार्यक्रम'},
+            date: {en: 'Date', hi: 'तिथि', mr: 'तारीख'},
+            viewColleges: {en: 'View Colleges', hi: 'कॉलेज देखें', mr: 'महाविद्यालये पहा'}
+        }
+    };
+    
+    const collegeData = {
+        'mht-cet': [
+            // Top Tier Colleges (Tier 1)
+            { 
+                name: 'COEP Technological University', 
+                city: 'Pune', 
+                img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400', 
+                highestPkg: '44 LPA', 
+                avgPkg: '11 LPA', 
+                intake: 600, 
+                nirfRank: 'Top 50', 
+                fees: '₹1.2L/year', 
+                cutoff: '95+ percentile', 
+                courses: ['Computer Engineering', 'Mechanical Engineering', 'Electrical Engineering', 'IT', 'E&TC', 'Civil', 'Chemical'], 
+                website: 'www.coep.org.in', 
+                phone: '+91-20-25507000', 
+                address: 'Wellesley Road, Shivajinagar, Pune',
+                cutoffs: {
+                    'Computer Engineering': { '2024': '99.7', '2023': '99.5', '2022': '99.2', '2021': '98.8' },
+                    'IT': { '2024': '99.3', '2023': '99.1', '2022': '98.8', '2021': '98.4' },
+                    'Mechanical Engineering': { '2024': '97.8', '2023': '97.2', '2022': '96.8', '2021': '96.1' },
+                    'Electrical Engineering': { '2024': '98.5', '2023': '98.1', '2022': '97.7', '2021': '97.2' },
+                    'E&TC': { '2024': '98.2', '2023': '97.8', '2022': '97.4', '2021': '97.0' },
+                    'Civil': { '2024': '96.5', '2023': '96.1', '2022': '95.7', '2021': '95.3' },
+                    'Chemical': { '2024': '95.8', '2023': '95.4', '2022': '95.0', '2021': '94.6' }
+                },
+                feesBreakdown: {
+                    'General': '₹1,20,000',
+                    'OBC': '₹60,000',
+                    'SC': '₹30,000',
+                    'ST': '₹30,000',
+                    'EWS': '₹60,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹45,000/year',
+                    'Girls Hostel': 'Available - ₹45,000/year',
+                    'Mess': '₹25,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports'
+                },
+                placement: {
+                    'Highest Package': '44 LPA',
+                    'Average Package': '11 LPA',
+                    'Placement Rate': '95%',
+                    'Top Recruiters': 'Google, Microsoft, Amazon, TCS, Infosys'
+                },
+                location: { lat: 18.5291, lng: 73.8565 },
+                intakeDetails: {
+                    'Computer Engineering': 120,
+                    'IT': 60,
+                    'Mechanical Engineering': 120,
+                    'Electrical Engineering': 120,
+                    'E&TC': 60,
+                    'Civil': 60,
+                    'Chemical': 60
+                }
+            },
+            { 
+                name: 'VJTI, Mumbai', 
+                city: 'Mumbai', 
+                img: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400', 
+                highestPkg: '58 LPA', 
+                avgPkg: '14 LPA', 
+                intake: 540, 
+                nirfRank: 'Top 100', 
+                fees: '₹1.5L/year', 
+                cutoff: '92+ percentile', 
+                courses: ['Computer Engineering', 'IT', 'Mechanical Engineering', 'Electrical', 'E&TC', 'Civil', 'Textile'], 
+                website: 'www.vjti.ac.in', 
+                phone: '+91-22-24198114', 
+                address: 'H R Mahajani Marg, Matunga, Mumbai',
+                cutoffs: {
+                    'Computer Engineering': { '2024': '99.2', '2023': '98.9', '2022': '98.5', '2021': '98.1' },
+                    'IT': { '2024': '98.1', '2023': '97.8', '2022': '97.4', '2021': '97.0' },
+                    'Mechanical Engineering': { '2024': '95.8', '2023': '95.2', '2022': '94.8', '2021': '94.1' },
+                    'Electrical': { '2024': '96.5', '2023': '96.1', '2022': '95.7', '2021': '95.3' },
+                    'E&TC': { '2024': '97.2', '2023': '96.8', '2022': '96.4', '2021': '96.0' },
+                    'Civil': { '2024': '94.8', '2023': '94.4', '2022': '94.0', '2021': '93.6' },
+                    'Textile': { '2024': '92.5', '2023': '92.1', '2022': '91.7', '2021': '91.3' }
+                },
+                feesBreakdown: {
+                    'General': '₹1,50,000',
+                    'OBC': '₹75,000',
+                    'SC': '₹37,500',
+                    'ST': '₹37,500',
+                    'EWS': '₹75,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹55,000/year',
+                    'Girls Hostel': 'Available - ₹55,000/year',
+                    'Mess': '₹30,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports, Library'
+                },
+                placement: {
+                    'Highest Package': '58 LPA',
+                    'Average Package': '14 LPA',
+                    'Placement Rate': '92%',
+                    'Top Recruiters': 'Google, Microsoft, Amazon, Goldman Sachs, Morgan Stanley'
+                },
+                location: { lat: 19.0223, lng: 72.8564 },
+                intakeDetails: {
+                    'Computer Engineering': 120,
+                    'IT': 60,
+                    'Mechanical Engineering': 120,
+                    'Electrical': 60,
+                    'E&TC': 60,
+                    'Civil': 60,
+                    'Textile': 60
+                }
+            },
+            { 
+                name: 'PICT, Pune', 
+                city: 'Pune', 
+                img: 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=400', 
+                highestPkg: '41 LPA', 
+                avgPkg: '10 LPA', 
+                intake: 660, 
+                nirfRank: 'Top 150', 
+                fees: '₹1.8L/year', 
+                cutoff: '90+ percentile', 
+                courses: ['Computer Engineering', 'IT', 'E&TC', 'Mechanical', 'Civil', 'Chemical', 'AI&DS'], 
+                website: 'www.pict.edu', 
+                phone: '+91-20-24371101', 
+                address: 'Survey No. 27, Near Trimurti Chowk, Pune',
+                cutoffs: {
+                    'Computer Engineering': { '2024': '97.2', '2023': '96.5', '2022': '96.1', '2021': '95.7' },
+                    'IT': { '2024': '96.1', '2023': '95.2', '2022': '94.8', '2021': '94.4' },
+                    'E&TC': { '2024': '94.5', '2023': '93.8', '2022': '93.4', '2021': '93.0' },
+                    'Mechanical': { '2024': '92.8', '2023': '92.1', '2022': '91.7', '2021': '91.3' },
+                    'Civil': { '2024': '91.5', '2023': '90.8', '2022': '90.4', '2021': '90.0' },
+                    'Chemical': { '2024': '90.2', '2023': '89.5', '2022': '89.1', '2021': '88.7' },
+                    'AI&DS': { '2024': '95.8', '2023': '95.1', '2022': '94.7', '2021': '94.3' }
+                },
+                feesBreakdown: {
+                    'General': '₹1,80,000',
+                    'OBC': '₹90,000',
+                    'SC': '₹45,000',
+                    'ST': '₹45,000',
+                    'EWS': '₹90,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹65,000/year',
+                    'Girls Hostel': 'Available - ₹65,000/year',
+                    'Mess': '₹35,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports, Swimming Pool'
+                },
+                placement: {
+                    'Highest Package': '41 LPA',
+                    'Average Package': '10 LPA',
+                    'Placement Rate': '88%',
+                    'Top Recruiters': 'TCS, Infosys, Wipro, Cognizant, Accenture'
+                },
+                location: { lat: 18.4575, lng: 73.8565 },
+                intakeDetails: {
+                    'Computer Engineering': 180,
+                    'IT': 120,
+                    'E&TC': 120,
+                    'Mechanical': 60,
+                    'Civil': 60,
+                    'Chemical': 60,
+                    'AI&DS': 60
+                }
+            },
+            { 
+                name: 'SPIT, Mumbai', 
+                city: 'Mumbai', 
+                img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400', 
+                highestPkg: '38 LPA', 
+                avgPkg: '9.5 LPA', 
+                intake: 480, 
+                nirfRank: 'Top 200', 
+                fees: '₹1.6L/year', 
+                cutoff: '88+ percentile', 
+                courses: ['Computer Engineering', 'IT', 'E&TC', 'Mechanical', 'Civil'], 
+                website: 'www.spit.ac.in', 
+                phone: '+91-22-26707440', 
+                address: 'Andheri West, Mumbai',
+                cutoffs: {
+                    'Computer Engineering': { '2024': '96.8', '2023': '96.1', '2022': '95.7', '2021': '95.3' },
+                    'IT': { '2024': '95.5', '2023': '94.8', '2022': '94.4', '2021': '94.0' },
+                    'E&TC': { '2024': '93.8', '2023': '93.1', '2022': '92.7', '2021': '92.3' },
+                    'Mechanical': { '2024': '91.2', '2023': '90.5', '2022': '90.1', '2021': '89.7' },
+                    'Civil': { '2024': '89.8', '2023': '89.1', '2022': '88.7', '2021': '88.3' }
+                },
+                feesBreakdown: {
+                    'General': '₹1,60,000',
+                    'OBC': '₹80,000',
+                    'SC': '₹40,000',
+                    'ST': '₹40,000',
+                    'EWS': '₹80,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹60,000/year',
+                    'Girls Hostel': 'Available - ₹60,000/year',
+                    'Mess': '₹32,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports, Library'
+                },
+                placement: {
+                    'Highest Package': '38 LPA',
+                    'Average Package': '9.5 LPA',
+                    'Placement Rate': '85%',
+                    'Top Recruiters': 'TCS, Infosys, Wipro, Capgemini, Tech Mahindra'
+                },
+                location: { lat: 19.1197, lng: 72.8464 },
+                intakeDetails: {
+                    'Computer Engineering': 120,
+                    'IT': 60,
+                    'E&TC': 120,
+                    'Mechanical': 120,
+                    'Civil': 60
+                }
+            },
+            { 
+                name: 'DJSCE, Mumbai', 
+                city: 'Mumbai', 
+                img: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400', 
+                highestPkg: '35 LPA', 
+                avgPkg: '9 LPA', 
+                intake: 540, 
+                nirfRank: 'Top 250', 
+                fees: '₹1.4L/year', 
+                cutoff: '85+ percentile', 
+                courses: ['Computer Engineering', 'IT', 'E&TC', 'Mechanical', 'Civil', 'Chemical'], 
+                website: 'www.djsce.ac.in', 
+                phone: '+91-22-24303261', 
+                address: 'Matunga, Mumbai',
+                cutoffs: {
+                    'Computer Engineering': { '2024': '95.2', '2023': '94.5', '2022': '94.1', '2021': '93.7' },
+                    'IT': { '2024': '93.8', '2023': '93.1', '2022': '92.7', '2021': '92.3' },
+                    'E&TC': { '2024': '92.1', '2023': '91.4', '2022': '91.0', '2021': '90.6' },
+                    'Mechanical': { '2024': '89.5', '2023': '88.8', '2022': '88.4', '2021': '88.0' },
+                    'Civil': { '2024': '87.8', '2023': '87.1', '2022': '86.7', '2021': '86.3' },
+                    'Chemical': { '2024': '86.2', '2023': '85.5', '2022': '85.1', '2021': '84.7' }
+                },
+                feesBreakdown: {
+                    'General': '₹1,40,000',
+                    'OBC': '₹70,000',
+                    'SC': '₹35,000',
+                    'ST': '₹35,000',
+                    'EWS': '₹70,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹55,000/year',
+                    'Girls Hostel': 'Available - ₹55,000/year',
+                    'Mess': '₹28,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports'
+                },
+                placement: {
+                    'Highest Package': '35 LPA',
+                    'Average Package': '9 LPA',
+                    'Placement Rate': '82%',
+                    'Top Recruiters': 'TCS, Infosys, Wipro, L&T, Godrej'
+                },
+                location: { lat: 19.0223, lng: 72.8564 },
+                intakeDetails: {
+                    'Computer Engineering': 120,
+                    'IT': 60,
+                    'E&TC': 120,
+                    'Mechanical': 120,
+                    'Civil': 60,
+                    'Chemical': 60
+                }
+            }
+        ],
+        'jee-main': [
+            { 
+                name: 'IIT Bombay', 
+                city: 'Mumbai', 
+                img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400', 
+                highestPkg: '2.1 Cr', 
+                avgPkg: '21 LPA', 
+                intake: 1200, 
+                nirfRank: '1', 
+                fees: '₹2.5L/year', 
+                cutoff: '99+ percentile', 
+                courses: ['Computer Science', 'Mechanical', 'Electrical'], 
+                website: 'www.iitb.ac.in', 
+                phone: '+91-22-25722545', 
+                address: 'Powai, Mumbai',
+                cutoffs: {
+                    'Computer Science': { '2023': '99.8', '2022': '99.7', '2021': '99.6' },
+                    'Mechanical': { '2023': '98.5', '2022': '98.2', '2021': '97.9' },
+                    'Electrical': { '2023': '99.1', '2022': '98.8', '2021': '98.5' }
+                },
+                feesBreakdown: {
+                    'General': '₹2,50,000',
+                    'OBC': '₹1,25,000',
+                    'SC': '₹62,500',
+                    'ST': '₹62,500',
+                    'EWS': '₹1,25,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹80,000/year',
+                    'Girls Hostel': 'Available - ₹80,000/year',
+                    'Mess': '₹40,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports, Swimming Pool, Library'
+                },
+                placement: {
+                    'Highest Package': '2.1 Cr',
+                    'Average Package': '21 LPA',
+                    'Placement Rate': '98%',
+                    'Top Recruiters': 'Google, Microsoft, Amazon, Apple, Meta, Uber'
+                },
+                location: { lat: 19.0223, lng: 72.8564 },
+                intakeDetails: {
+                    'Computer Science': 120,
+                    'Mechanical': 120,
+                    'Electrical': 120,
+                    'Chemical': 60,
+                    'Civil': 60,
+                    'Metallurgical': 60,
+                    'Aerospace': 60
+                }
+            },
+            { 
+                name: 'IIT Delhi', 
+                city: 'Delhi', 
+                img: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400', 
+                highestPkg: '2.3 Cr', 
+                avgPkg: '22 LPA', 
+                intake: 1100, 
+                nirfRank: '2', 
+                fees: '₹2.5L/year', 
+                cutoff: '99+ percentile', 
+                courses: ['Computer Science', 'Mechanical', 'Electrical'], 
+                website: 'www.iitd.ac.in', 
+                phone: '+91-11-26591735', 
+                address: 'Hauz Khas, New Delhi',
+                cutoffs: {
+                    'Computer Science': { '2023': '99.9', '2022': '99.8', '2021': '99.7' },
+                    'Mechanical': { '2023': '98.7', '2022': '98.4', '2021': '98.1' },
+                    'Electrical': { '2023': '99.3', '2022': '99.0', '2021': '98.7' }
+                },
+                feesBreakdown: {
+                    'General': '₹2,50,000',
+                    'OBC': '₹1,25,000',
+                    'SC': '₹62,500',
+                    'ST': '₹62,500',
+                    'EWS': '₹1,25,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹85,000/year',
+                    'Girls Hostel': 'Available - ₹85,000/year',
+                    'Mess': '₹45,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports, Swimming Pool, Library'
+                },
+                placement: {
+                    'Highest Package': '2.3 Cr',
+                    'Average Package': '22 LPA',
+                    'Placement Rate': '99%',
+                    'Top Recruiters': 'Google, Microsoft, Amazon, Apple, Meta, Uber, Netflix'
+                },
+                location: { lat: 28.5451, lng: 77.1923 },
+                intakeDetails: {
+                    'Computer Science': 120,
+                    'Mechanical': 120,
+                    'Electrical': 120,
+                    'Chemical': 60,
+                    'Civil': 60,
+                    'Metallurgical': 60,
+                    'Biotechnology': 60
+                }
+            }
+        ],
+        'bitsat': [
+            { 
+                name: 'BITS Pilani', 
+                city: 'Pilani', 
+                img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400', 
+                highestPkg: '1.8 Cr', 
+                avgPkg: '18 LPA', 
+                intake: 800, 
+                nirfRank: 'Top 15', 
+                fees: '₹4.5L/year', 
+                cutoff: '350+ score', 
+                courses: ['Computer Science', 'Mechanical', 'Electrical'], 
+                website: 'www.bits-pilani.ac.in', 
+                phone: '+91-1596-242210', 
+                address: 'Vidya Vihar, Pilani',
+                cutoffs: {
+                    'Computer Science': { '2023': '380', '2022': '375', '2021': '370' },
+                    'Mechanical': { '2023': '320', '2022': '315', '2021': '310' },
+                    'Electrical': { '2023': '340', '2022': '335', '2021': '330' }
+                },
+                feesBreakdown: {
+                    'General': '₹4,50,000',
+                    'OBC': '₹2,25,000',
+                    'SC': '₹1,12,500',
+                    'ST': '₹1,12,500',
+                    'EWS': '₹2,25,000'
+                },
+                hostel: {
+                    'Boys Hostel': 'Available - ₹1,20,000/year',
+                    'Girls Hostel': 'Available - ₹1,20,000/year',
+                    'Mess': '₹60,000/year',
+                    'Facilities': 'WiFi, Gym, Medical, Sports, Swimming Pool, Library, AC'
+                },
+                placement: {
+                    'Highest Package': '1.8 Cr',
+                    'Average Package': '18 LPA',
+                    'Placement Rate': '95%',
+                    'Top Recruiters': 'Google, Microsoft, Amazon, Apple, Meta, Uber, Goldman Sachs'
+                },
+                location: { lat: 28.3670, lng: 75.6040 },
+                intakeDetails: {
+                    'Computer Science': 120,
+                    'Mechanical': 120,
+                    'Electrical': 120,
+                    'Chemical': 60,
+                    'Civil': 60,
+                    'Biotechnology': 60,
+                    'Pharmacy': 60
+                }
+            }
+        ]
+    };
+
+    // Comprehensive exam details data
+    const examDetails = {
+        'mht-cet': {
+            name: 'MHT-CET',
+            fullName: { en: 'Maharashtra Common Entrance Test', hi: 'महाराष्ट्र कॉमन एंट्रेंस टेस्ट', mr: 'महाराष्ट्र कॉमन एंट्रन्स टेस्ट' },
+            eligibility: { en: '12th pass with PCM/PCB with minimum 50% marks', hi: 'PCM/PCB के साथ 12वीं पास, न्यूनतम 50% अंक', mr: 'PCM/PCB सह १२वी पास, किमान ५०% गुण' },
+            examDate: { en: 'May 2025', hi: 'मई 2025', mr: 'मे २०२५' },
+            applicationDeadline: { en: 'March 2025', hi: 'मार्च 2025', mr: 'मार्च २०२५' },
+            examDuration: { en: '3 hours', hi: '3 घंटे', mr: '३ तास' },
+            totalQuestions: { en: '150 questions', hi: '150 प्रश्न', mr: '१५० प्रश्न' },
+            subjects: { en: 'Physics, Chemistry, Mathematics/Biology', hi: 'भौतिकी, रसायन विज्ञान, गणित/जीव विज्ञान', mr: 'भौतिकशास्त्र, रसायनशास्त्र, गणित/जीवशास्त्र' },
+            markingScheme: { en: 'No negative marking', hi: 'कोई नेगेटिव मार्किंग नहीं', mr: 'नकारात्मक गुण नाहीत' },
+            examMode: { en: 'Computer Based Test (CBT)', hi: 'कंप्यूटर आधारित परीक्षा', mr: 'संगणक आधारित परीक्षा' },
+            examCenters: { en: 'Multiple centers across Maharashtra', hi: 'महाराष्ट्र में कई केंद्र', mr: 'महाराष्ट्रात अनेक केंद्रे' },
+            applicationFee: { en: '₹800 for General, ₹600 for Reserved', hi: 'सामान्य के लिए ₹800, आरक्षित के लिए ₹600', mr: 'सामान्यांसाठी ₹८००, आरक्षितांसाठी ₹६००' },
+            resultDate: { en: 'June 2024', hi: 'जून 2024', mr: 'जून २०२४' },
+            counselingRounds: { en: '3 rounds of counseling', hi: '3 राउंड काउंसलिंग', mr: '३ फेरी सल्लागार' },
+            preparationTips: [
+                { en: 'Focus on NCERT books for strong fundamentals', hi: 'मजबूत बुनियाद के लिए NCERT पुस्तकों पर ध्यान दें', mr: 'मजबूत पाया साठी NCERT पुस्तकांवर लक्ष केंद्रित करा' },
+                { en: 'Practice previous year question papers', hi: 'पिछले वर्ष के प्रश्न पत्रों का अभ्यास करें', mr: 'मागील वर्षांच्या प्रश्नपत्रिकांचा सराव करा' },
+                { en: 'Take regular mock tests', hi: 'नियमित मॉक टेस्ट लें', mr: 'नियमित मॉक टेस्ट घ्या' },
+                { en: 'Time management is crucial', hi: 'समय प्रबंधन महत्वपूर्ण है', mr: 'वेळ व्यवस्थापन महत्वाचे आहे' }
+            ],
+            examPattern: { en: 'Single paper with 150 MCQs', hi: '150 बहुविकल्पी प्रश्नों के साथ एक पेपर', mr: '१५० बहुपर्यायी प्रश्नांसह एक कागद' },
+            difficultyLevel: { en: 'Moderate to Difficult', hi: 'मध्यम से कठिन', mr: 'मध्यम ते कठीण' },
+            totalSeats: { en: '2.5+ Lakh seats', hi: '2.5+ लाख सीटें', mr: '२.५+ लाख जागा' },
+            participatingColleges: { en: '500+ colleges', hi: '500+ कॉलेज', mr: '५००+ महाविद्यालये' }
+        },
+        'jee-main': {
+            name: 'JEE Main',
+            fullName: { en: 'Joint Entrance Examination Main', hi: 'संयुक्त प्रवेश परीक्षा मुख्य', mr: 'संयुक्त प्रवेश परीक्षा मुख्य' },
+            eligibility: { en: '12th pass with PCM with minimum 75% marks', hi: 'PCM के साथ 12वीं पास, न्यूनतम 75% अंक', mr: 'PCM सह १२वी पास, किमान ७५% गुण' },
+            examDate: { en: 'January, April, May 2025', hi: 'जनवरी, अप्रैल, मई 2025', mr: 'जानेवारी, एप्रिल, मे २०२५' },
+            applicationDeadline: { en: 'December 2024', hi: 'दिसंबर 2024', mr: 'डिसेंबर २०२४' },
+            examDuration: { en: '3 hours', hi: '3 घंटे', mr: '३ तास' },
+            totalQuestions: { en: '75 questions', hi: '75 प्रश्न', mr: '७५ प्रश्न' },
+            subjects: { en: 'Physics, Chemistry, Mathematics', hi: 'भौतिकी, रसायन विज्ञान, गणित', mr: 'भौतिकशास्त्र, रसायनशास्त्र, गणित' },
+            markingScheme: { en: '+4 for correct, -1 for incorrect', hi: 'सही के लिए +4, गलत के लिए -1', mr: 'बरोबरासाठी +४, चुकीसाठी -१' },
+            examMode: { en: 'Computer Based Test (CBT)', hi: 'कंप्यूटर आधारित परीक्षा', mr: 'संगणक आधारित परीक्षा' },
+            examCenters: { en: 'Multiple centers across India', hi: 'भारत में कई केंद्र', mr: 'भारतात अनेक केंद्रे' },
+            applicationFee: { en: '₹650 for General, ₹325 for Reserved', hi: 'सामान्य के लिए ₹650, आरक्षित के लिए ₹325', mr: 'सामान्यांसाठी ₹६५०, आरक्षितांसाठी ₹३२५' },
+            resultDate: { en: 'Within 2 weeks of exam', hi: 'परीक्षा के 2 सप्ताह के भीतर', mr: 'परीक्षेच्या २ आठवड्यांत' },
+            counselingRounds: { en: 'JoSAA counseling (6 rounds)', hi: 'JoSAA काउंसलिंग (6 राउंड)', mr: 'JoSAA सल्लागार (६ फेरी)' },
+            preparationTips: [
+                { en: 'Master NCERT concepts thoroughly', hi: 'NCERT की अवधारणाओं को पूरी तरह से समझें', mr: 'NCERT च्या संकल्पना पूर्णपणे समजून घ्या' },
+                { en: 'Practice numerical problems extensively', hi: 'संख्यात्मक समस्याओं का व्यापक अभ्यास करें', mr: 'संख्यात्मक समस्या मोठ्या प्रमाणात सराव करा' },
+                { en: 'Focus on time management', hi: 'समय प्रबंधन पर ध्यान दें', mr: 'वेळ व्यवस्थापनावर लक्ष केंद्रित करा' },
+                { en: 'Take regular mock tests', hi: 'नियमित मॉक टेस्ट लें', mr: 'नियमित मॉक टेस्ट घ्या' }
+            ],
+            examPattern: { en: 'Three sections with 25 questions each', hi: 'तीन खंड, प्रत्येक में 25 प्रश्न', mr: 'तीन विभाग, प्रत्येकी २५ प्रश्न' },
+            difficultyLevel: { en: 'Very Difficult', hi: 'बहुत कठिन', mr: 'खूप कठीण' },
+            totalSeats: { en: '1.5+ Lakh seats', hi: '1.5+ लाख सीटें', mr: '१.५+ लाख जागा' },
+            participatingColleges: { en: '100+ colleges', hi: '100+ कॉलेज', mr: '१००+ महाविद्यालये' }
+        },
+        'bitsat': {
+            name: 'BITSAT',
+            fullName: { en: 'BITS Admission Test', hi: 'बिट्स एडमिशन टेस्ट', mr: 'बिट्स ऍडमिशन टेस्ट' },
+            eligibility: { en: '12th pass with PCM with minimum 75% marks', hi: 'PCM के साथ 12वीं पास, न्यूनतम 75% अंक', mr: 'PCM सह १२वी पास, किमान ७५% गुण' },
+            examDate: { en: 'May-June 2025', hi: 'मई-जून 2025', mr: 'मे-जून २०२५' },
+            applicationDeadline: { en: 'March 2025', hi: 'मार्च 2025', mr: 'मार्च २०२५' },
+            examDuration: { en: '3 hours', hi: '3 घंटे', mr: '३ तास' },
+            totalQuestions: { en: '150 questions', hi: '150 प्रश्न', mr: '१५० प्रश्न' },
+            subjects: { en: 'Physics, Chemistry, Mathematics, English, Logical Reasoning', hi: 'भौतिकी, रसायन विज्ञान, गणित, अंग्रेजी, तार्किक तर्क', mr: 'भौतिकशास्त्र, रसायनशास्त्र, गणित, इंग्रजी, तार्किक तर्क' },
+            markingScheme: { en: '+3 for correct, -1 for incorrect', hi: 'सही के लिए +3, गलत के लिए -1', mr: 'बरोबरासाठी +३, चुकीसाठी -१' },
+            examMode: { en: 'Computer Based Test (CBT)', hi: 'कंप्यूटर आधारित परीक्षा', mr: 'संगणक आधारित परीक्षा' },
+            examCenters: { en: 'Multiple centers across India', hi: 'भारत में कई केंद्र', mr: 'भारतात अनेक केंद्रे' },
+            applicationFee: { en: '₹3400 for Male, ₹2900 for Female', hi: 'पुरुष के लिए ₹3400, महिला के लिए ₹2900', mr: 'पुरुषांसाठी ₹३४००, महिलांसाठी ₹२९००' },
+            resultDate: { en: 'June 2024', hi: 'जून 2024', mr: 'जून २०२४' },
+            counselingRounds: { en: 'Iterative counseling process', hi: 'इटरेटिव काउंसलिंग प्रक्रिया', mr: 'पुनरावृत्ती सल्लागार प्रक्रिया' },
+            preparationTips: [
+                { en: 'Focus on PCM fundamentals', hi: 'PCM की बुनियाद पर ध्यान दें', mr: 'PCM च्या पायावर लक्ष केंद्रित करा' },
+                { en: 'Practice English and Logical Reasoning', hi: 'अंग्रेजी और तार्किक तर्क का अभ्यास करें', mr: 'इंग्रजी आणि तार्किक तर्काचा सराव करा' },
+                { en: 'Time management is crucial', hi: 'समय प्रबंधन महत्वपूर्ण है', mr: 'वेळ व्यवस्थापन महत्वाचे आहे' },
+                { en: 'Take regular mock tests', hi: 'नियमित मॉक टेस्ट लें', mr: 'नियमित मॉक टेस्ट घ्या' }
+            ],
+            examPattern: { en: 'Five sections with 30 questions each', hi: 'पांच खंड, प्रत्येक में 30 प्रश्न', mr: 'पाच विभाग, प्रत्येकी ३० प्रश्न' },
+            difficultyLevel: { en: 'Difficult', hi: 'कठिन', mr: 'कठीण' },
+            totalSeats: { en: '2000+ seats', hi: '2000+ सीटें', mr: '२०००+ जागा' },
+            participatingColleges: { en: '3 BITS campuses', hi: '3 बिट्स कैंपस', mr: '३ बिट्स कॅम्पस' }
+        }
+    };
+
+    // Gemini API configuration
+    const GEMINI_API_KEY = 'AIzaSyC-2jr4RlBvKWW8sdjdGjJBQ1ujHR-D2Xs'; // Replace with your actual API key
+    const GEMINI_API_URL =`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyC-2jr4RlBvKWW8sdjdGjJBQ1ujHR-D2Xs`;
+-
+    async function callGeminiAPI(prompt) {
+        // Check if API key is properly configured
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+            console.warn('Gemini API key not configured. Please add your API key.');
+            return null;
+        }
+
+        try {
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // Check if the response has the expected structure
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Invalid response structure from Gemini API');
+            }
+            
+            return data.candidates[0].content.parts[0].text;
+        } catch (error) {
+            console.error('Error calling Gemini API:', error);
+            return null;
+        }
+    }
+
+    // Function to fetch comprehensive MHT-CET colleges using Gemini AI
+    async function fetchTopMHTColleges() {
+        const prompt = `Provide a comprehensive list of 150+ engineering colleges in Maharashtra that accept MHT-CET scores. For each college, provide the following information in JSON format:
+
+        {
+            "name": "College Name",
+            "city": "City Name",
+            "img": "https://images.unsplash.com/photo-1562774053-701939374585?w=400",
+            "highestPkg": "Package in LPA",
+            "avgPkg": "Average Package in LPA", 
+            "intake": "Total intake number",
+            "nirfRank": "NIRF ranking or status",
+            "fees": "Annual fees in ₹",
+            "cutoff": "Cutoff percentile",
+            "courses": ["Computer Engineering", "IT", "Mechanical Engineering", "Electrical Engineering", "E&TC", "Civil", "Chemical", "AI&DS", "Data Science"],
+            "website": "college website",
+            "phone": "contact phone",
+            "address": "full address",
+            "cutoffs": {
+                "Computer Engineering": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "IT": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "Mechanical Engineering": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "Electrical Engineering": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "E&TC": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "Civil": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "Chemical": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "AI&DS": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"},
+                "Data Science": {"2024": "percentile", "2023": "percentile", "2022": "percentile", "2021": "percentile"}
+            },
+            "feesBreakdown": {
+                "General": "₹amount",
+                "OBC": "₹amount", 
+                "SC": "₹amount",
+                "ST": "₹amount",
+                "EWS": "₹amount"
+            },
+            "hostel": {
+                "Boys Hostel": "Available - ₹amount/year",
+                "Girls Hostel": "Available - ₹amount/year", 
+                "Mess": "₹amount/year",
+                "Facilities": "WiFi, Gym, Medical, Sports"
+            },
+            "placement": {
+                "Highest Package": "amount LPA",
+                "Average Package": "amount LPA",
+                "Placement Rate": "percentage%",
+                "Top Recruiters": "Company names"
+            },
+            "location": {"lat": "latitude", "lng": "longitude"},
+            "intakeDetails": {
+                "Computer Engineering": "seats",
+                "IT": "seats",
+                "Mechanical Engineering": "seats",
+                "Electrical Engineering": "seats",
+                "E&TC": "seats",
+                "Civil": "seats",
+                "Chemical": "seats",
+                "AI&DS": "seats",
+                "Data Science": "seats"
+            }
+        }
+
+        Include ALL major colleges in Maharashtra including:
+        - Tier 1: COEP, VJTI, PICT, SPIT, DJSCE, KJSCE, TSEC, AISSMS COE, MMCOE, PCCOE, PES Modern, DY Patil, MIT WPU, Symbiosis, Cummins, Fr. Agnel, Xavier's, St. Francis, Don Bosco, Pillai
+        - Tier 2: All other government and private colleges in Mumbai, Pune, Nagpur, Aurangabad, Nashik, Kolhapur, Amravati, Solapur, etc.
+        - Include colleges from all major cities: Mumbai, Pune, Nagpur, Aurangabad, Nashik, Kolhapur, Amravati, Solapur, Jalgaon, Latur, Beed, Osmanabad, etc.
+        
+        Provide realistic 2024 cutoff data with caste-wise breakdown. Include all branches: Computer, IT, Mechanical, Electrical, E&TC, Civil, Chemical, AI&DS, Data Science, etc.
+        
+        Return only the JSON array without any additional text. Make sure to include at least 150 colleges with comprehensive data.`;
+
+        try {
+            const response = await callGeminiAPI(prompt);
+            if (response) {
+                // Clean the response to extract JSON
+                const jsonMatch = response.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[0]);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching MHT-CET colleges:', error);
+        }
+        
+        return null;
+    }
+
+    // Function to fetch real-time college data using Gemini API
+    async function fetchRealTimeCollegeData(collegeName, examType) {
+        if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
+            return null; // Return null if API key is not set
+        }
+        
+        const prompt = `Provide the latest 2024 cutoff scores, fees, and placement statistics for ${collegeName} for ${examType} exam. Format the response as JSON with the following structure:
+        {
+            "cutoffs": {"Course": {"2024": "score"}},
+            "fees": {"category": "amount"},
+            "placement": {"stat": "value"},
+            "hostel": {"facility": "details"}
+        }`;
+        
+        try {
+            const response = await callGeminiAPI(prompt);
+            if (response) {
+                return JSON.parse(response);
+            }
+        } catch (error) {
+            console.error('Error fetching real-time data:', error);
+        }
+        
+        return null;
+    }
+    
+    // Function to update college data with real-time information
+    async function updateCollegeWithRealTimeData(college, examType) {
+        const realTimeData = await fetchRealTimeCollegeData(college.name, examType);
+        if (realTimeData) {
+            // Update college data with real-time information
+            if (realTimeData.cutoffs) {
+                college.cutoffs = { ...college.cutoffs, ...realTimeData.cutoffs };
+            }
+            if (realTimeData.fees) {
+                college.feesBreakdown = { ...college.feesBreakdown, ...realTimeData.fees };
+            }
+            if (realTimeData.placement) {
+                college.placement = { ...college.placement, ...realTimeData.placement };
+            }
+            if (realTimeData.hostel) {
+                college.hostel = { ...college.hostel, ...realTimeData.hostel };
+            }
+        }
+        return college;
+    }
+
+    // AI Chat Assistant Functions
+    function initAIChat() {
+        const chatToggle = document.getElementById('ai-chat-toggle');
+        const chatWindow = document.getElementById('ai-chat-window');
+        const chatClose = document.getElementById('ai-chat-close');
+        const chatSend = document.getElementById('ai-chat-send');
+        const chatInput = document.getElementById('ai-chat-input');
+        const chatMessages = document.getElementById('ai-chat-messages');
+
+        chatToggle.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWindow.style.display = 'none';
+        });
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            chatInput.value = '';
+
+            // Show typing indicator
+            const typingIndicator = addMessage('Typing...', 'ai', true);
+
+            try {
+                // Get AI response
+                const aiResponse = await getAIResponse(message);
+                
+                // Remove typing indicator and add AI response
+                typingIndicator.remove();
+                addMessage(aiResponse, 'ai');
+            } catch (error) {
+                typingIndicator.remove();
+                addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+            }
+        }
+
+        function addMessage(text, type, isTyping = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'user' ? 'user-message' : 'ai-message';
+            if (isTyping) messageDiv.style.opacity = '0.7';
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return messageDiv;
+        }
+
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
+
+    async function getAIResponse(message) {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+            return "I'm sorry, but I'm currently not connected to my AI services. The API key is not configured. Please contact the administrator to set up the AI assistant.";
+        }
+
+        const prompt = `You are AdmitAI, a comprehensive college admission assistant for MHT-CET, JEE Main, and BITSAT exams. 
+        
+        User Question: "${message}"
+        
+        Provide detailed, helpful responses about:
+        1. College admissions and cutoff trends
+        2. Exam preparation strategies
+        3. Course recommendations based on scores
+        4. Fee structure and scholarship information
+        5. Placement statistics and career guidance
+        6. Hostel facilities and campus life
+        7. Application procedures and deadlines
+        
+        Focus on Maharashtra colleges for MHT-CET, but also cover national colleges for JEE Main and BITSAT.
+        Include specific cutoff data, fee breakdowns, and placement information when relevant.
+        Keep responses informative but concise. If the user asks about specific colleges, provide detailed information.
+        
+        Current year: 2025`;
+
+        try {
+            const response = await callGeminiAPI(prompt);
+            return response || "I'm sorry, I couldn't process your request. Please try again.";
+        } catch (error) {
+            console.error('Error getting AI response:', error);
+            return "I'm sorry, I encountered an error. Please try again.";
+        }
+    }
+
+    // AI Recommendation Function
+    async function generateAIRecommendation(examType, userPreferences = {}) {
+        if (!GEMINI_API_KEY) {
+            return null;
+        }
+
+        const prompt = `Based on the exam type "${examType}" and user preferences, provide a personalized college recommendation. 
+        Consider factors like:
+        - Top colleges for this exam
+        - Placement records
+        - Fee structure
+        - Location preferences
+        - Course preferences
+        
+        Provide a concise recommendation with 2-3 top college suggestions and reasoning.`;
+
+        try {
+            const response = await callGeminiAPI(prompt);
+            return response;
+        } catch (error) {
+            console.error('Error generating AI recommendation:', error);
+            return null;
+        }
+    }
+
+    function addAIRecommendation(container, examType) {
+        const recommendationDiv = document.createElement('div');
+        recommendationDiv.className = 'ai-recommendation';
+        recommendationDiv.innerHTML = `
+            <h4>🤖 AI College Recommendation</h4>
+            <p>Loading personalized recommendations...</p>
+        `;
+        container.appendChild(recommendationDiv);
+
+        generateAIRecommendation(examType).then(recommendation => {
+            if (recommendation) {
+                recommendationDiv.innerHTML = `
+                    <h4>🤖 AI College Recommendation</h4>
+                    <p>${recommendation}</p>
+                `;
+            } else {
+                recommendationDiv.remove();
+            }
+        });
+    }
+
+    // Function to update MHT-CET colleges with comprehensive Gemini AI data
+    async function updateMHTCollegesWithGemini() {
+        // Check if API key is configured
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+            showNotification('Gemini API key not configured. Please add your API key to enable this feature.', 'error');
+            return;
+        }
+
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        loadingDiv.innerHTML = `
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-700">Fetching 150+ MHT-CET colleges with comprehensive data...</p>
+                <p class="text-sm text-gray-500 mt-2">This may take a few moments</p>
+            </div>
+        `;
+        document.body.appendChild(loadingDiv);
+
+        try {
+            const colleges = await fetchTopMHTColleges();
+            if (colleges && colleges.length > 0) {
+                // Update the collegeData with new comprehensive data
+                collegeData['mht-cet'] = colleges;
+                
+                // Update the UI if we're currently viewing MHT-CET colleges
+                if (activeDashboardView === 'college-listings' && document.getElementById('city-filter')?.dataset.exam === 'mht-cet') {
+                    updateCollegeListingsViewText('mht-cet');
+                }
+                
+                // Show success message with count
+                showNotification(`Successfully updated with ${colleges.length} MHT-CET colleges!`, 'success');
+            } else {
+                showNotification('No new data received. Using existing college data.', 'info');
+            }
+        } catch (error) {
+            console.error('Error updating colleges:', error);
+            showNotification('Unable to fetch new data. Using existing college data.', 'info');
+        } finally {
+            if (document.body.contains(loadingDiv)) {
+                document.body.removeChild(loadingDiv);
+            }
+        }
+    }
+
+    // Function to show notifications
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-500 text-white' : 
+            type === 'error' ? 'bg-red-500 text-white' : 
+            'bg-blue-500 text-white'
+        }`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 3000);
+    }
+
+    // ----------- 2. MAIN APPLICATION LOGIC -----------
+    document.addEventListener('DOMContentLoaded', () => {
+        const pages = document.querySelectorAll('.page-container');
+        const languageSwitchers = document.querySelectorAll('.language-switcher');
+        const canvas = document.getElementById('neural-network-canvas');
+        let currentLang = localStorage.getItem('language') || 'en';
+        let activePage = '';
+        let activeDashboardView = 'main-dashboard';
+        const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`;
+        const eyeSlashIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>`;
+
+        function showPage(pageId) { pages.forEach(p => p.classList.remove('active')); const targetPage = document.getElementById(`page-${pageId}`); if (targetPage) { targetPage.classList.add('active'); window.location.hash = pageId; activePage = pageId; updateAllText(); canvas.style.display = (pageId.startsWith('dashboard')) ? 'none' : 'block'; document.body.style.backgroundColor = (pageId.startsWith('dashboard')) ? '#f3f4f6' : '#0a0a0a'; } }
+        function showAuthSection(sectionId) { document.querySelectorAll('.auth-section').forEach(s => s.classList.remove('active')); document.getElementById(sectionId).classList.add('active'); window.location.hash = `auth/${sectionId}`; }
+        function showDashboardView(viewId, context = null) { 
+            document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active')); 
+            const targetView = document.getElementById(`view-${viewId}`); 
+            if(targetView) { 
+                targetView.classList.add('active'); 
+            } 
+            activeDashboardView = viewId; 
+            updateDashboardPageText(context); 
+            
+            // Handle exam details view
+            if (viewId === 'exam-details' && context) {
+                updateExamDetailsViewText(context);
+            }
+        }
+        function updateAllText() { languageSwitchers.forEach(s => s.value = currentLang); if (activePage === 'index') updateIndexPageText(); if (activePage === 'auth') updateAuthPageText(); if (activePage === 'dashboard') updateDashboardPageText(); }
+        function setupLanguageSwitchers() { languageSwitchers.forEach(switcher => { switcher.innerHTML = ''; Object.keys(translations.languages).forEach(langCode => { const option = document.createElement('option'); option.value = langCode; option.textContent = translations.languages[langCode]; switcher.appendChild(option); }); switcher.value = currentLang; switcher.addEventListener('change', (e) => { currentLang = e.target.value; localStorage.setItem('language', currentLang); updateAllText(); }); }); }
+        
+        const updateIndexPageText = () => { const content=translations.index;document.getElementById("hero-title").innerHTML=content.heroTitle[currentLang],document.getElementById("hero-subtitle").innerText=content.heroSubtitle[currentLang],document.getElementById("hero-cta").innerText=content.heroCTA[currentLang],document.getElementById("header-get-started").innerText=content.headerGetStarted[currentLang],document.getElementById("social-proof-title").innerText=content.socialProofTitle[currentLang],document.getElementById("features-title").innerText=content.featuresTitle[currentLang],document.getElementById("features-subtitle").innerText=content.featuresSubtitle[currentLang],document.getElementById("testimonials-title").innerText=content.testimonialsTitle[currentLang],document.getElementById("faq-title").innerText=content.faqTitle[currentLang],document.getElementById("cta-title").innerText=content.ctaTitle[currentLang],document.getElementById("cta-subtitle").innerText=content.ctaSubtitle[currentLang],document.getElementById("cta-button").innerText=content.ctaButton[currentLang],document.getElementById("features-container").innerHTML=content.features.map(t=>`<div class="feature-card p-8 text-center scroll-animation"><h4 class="text-xl font-semibold text-white mb-2">${t.title[currentLang]}</h4><p class="text-gray-400">${t.desc[currentLang]}</p></div>`).join(""),document.getElementById("testimonials-container").innerHTML=content.testimonials.map(t=>`<div class="feature-card p-6 scroll-animation"><p class="text-gray-300 mb-4">"${t.quote[currentLang]}"</p><p class="font-bold text-white">${t.name}</p></div>`).join(""),document.getElementById("faq-container").innerHTML=content.faqs.map(t=>`<div class="faq-item bg-gray-800/50 border border-gray-700 rounded-lg"><button class="faq-question w-full flex justify-between items-center text-left p-4"><span class="font-semibold text-white">${t.q[currentLang]}</span><span class="faq-arrow text-white transition-transform">▼</span></button><div class="faq-answer px-4 pb-4 text-gray-400">${t.a[currentLang]}</div></div>`).join(""),document.querySelectorAll(".faq-question").forEach(t=>{t.addEventListener("click",()=>{t.parentElement.classList.toggle("open")})}),handleScrollAnimation() };
+        const updateAuthPageText = () => { const content=translations.auth;document.getElementById("auth-choice-title").innerText=content.authChoiceTitle[currentLang],document.getElementById("auth-choice-subtitle").innerText=content.authChoiceSubtitle[currentLang],document.getElementById("auth-choice-signup-btn").innerText=content.authChoiceSignup[currentLang],document.getElementById("auth-choice-signin-btn").innerText=content.authChoiceSignin[currentLang],document.getElementById("back-to-choice-text1").innerText=content.backToChoice[currentLang],document.getElementById("back-to-choice-text2").innerText=content.backToChoice[currentLang],document.getElementById("signin-title").innerText=content.signInTitle[currentLang],document.getElementById("signin-email-label").innerText=content.emailLabel[currentLang],document.getElementById("signin-password-label").innerText=content.passwordLabel[currentLang],document.getElementById("signin-button").innerText=content.signInButton[currentLang],document.getElementById("signup-title-1").innerText=content.signUpTitle1[currentLang],document.getElementById("signup-email-label").innerText=content.emailLabel[currentLang],document.getElementById("signup-password-label").innerText=content.passwordLabel[currentLang],document.getElementById("signup-confirm-password-label").innerText=content.confirmPasswordLabel[currentLang],document.getElementById("signup-continue-btn").innerText=content.signUpContinueBtn[currentLang],document.getElementById("personal-info-title").innerText=content.personalInfoTitle[currentLang],document.getElementById("personal-info-subtitle").innerText=content.personalInfoSubtitle[currentLang],document.getElementById("signup-name-label").innerText=content.nameLabel[currentLang],document.getElementById("signup-phone-label").innerText=content.phoneLabel[currentLang],document.getElementById("signup-city-label").innerText=content.cityLabel[currentLang],document.getElementById("open-dashboard-btn").innerText=content.openDashboard[currentLang],document.getElementById("password-match-error").innerText=content.passMatchError[currentLang] };
+        const updateDashboardPageText = (context = null) => {
+            const content = translations.dashboard;
+            const navContainer = document.getElementById('sidebar-nav');
+            navContainer.innerHTML = content.nav.map(item => `<a href="#" class="sidebar-link dashboard-nav-link px-4 py-3 rounded-lg" data-target="${item.id}">${item.text[currentLang]}</a>`).join('');
+            document.querySelectorAll('.sidebar-link[data-target]').forEach(link => link.classList.toggle('active', link.dataset.target === activeDashboardView));
+            document.getElementById('nav-logout').innerText = content.navLogout[currentLang];
+            if (activeDashboardView === 'main-dashboard') updateMainDashboardViewText();
+            if (activeDashboardView === 'course-finder') updateCourseFinderViewText();
+            if (activeDashboardView === 'college-listings') updateCollegeListingsViewText(context);
+        };
+        const updateMainDashboardViewText = () => { 
+            const content = translations.dashboard; 
+            document.getElementById("dashboard-title").innerText = content.dashboardTitle[currentLang]; 
+            document.getElementById("welcome-title").innerText = content.welcomeTitle[currentLang]; 
+            document.getElementById("welcome-subtitle").innerText = content.welcomeSubtitle[currentLang]; 
+            document.getElementById("chat-prompt").innerText = content.chatPrompt[currentLang]; 
+            
+            // Update AI status message
+            const aiStatusMessage = document.getElementById("ai-status-message");
+            if (aiStatusMessage) {
+                if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+                    aiStatusMessage.innerText = "The AI assistant is currently not available. The API key is not configured. Please contact the administrator.";
+                } else {
+                    aiStatusMessage.innerText = "🤖 AI Chatbot is active! Ask me about colleges, cutoffs, fees, and admission guidance.";
+                    document.getElementById("ai-status-alert").className = "bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-lg";
+                }
+            }
+            
+            const cardsContainer = document.getElementById("dashboard-cards"); 
+            cardsContainer.innerHTML = content.cards.map(card => `<div class="bg-white p-6 rounded-xl shadow-md cursor-pointer hover:shadow-lg transition-shadow dashboard-nav-link" data-target="${card.id}"><h4 class="font-bold text-gray-800 text-lg">${card.title[currentLang]}</h4><p class="text-sm text-gray-500 mt-1">${card.desc[currentLang]}</p></div>`).join(""); 
+        };
+        const updateCourseFinderViewText = () => {
+            const content = translations.courseFinder;
+            document.getElementById('course-finder-title').innerText = content.title[currentLang];
+            const container = document.getElementById('exam-categories-container');
+            container.innerHTML = '';
+            content.categories.forEach(category => {
+                const categoryHtml = `<div><h4 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">${category.name[currentLang]}</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${category.exams.map(exam => `<div class="bg-white p-6 rounded-lg flex flex-col exam-card cursor-pointer" data-exam="${exam.id}"><h5 class="text-lg font-bold text-gray-900">${exam.name}</h5><p class="text-sm text-gray-500">${exam.fullName[currentLang]}</p><p class="text-gray-600 my-4 flex-grow">${exam.desc[currentLang]}</p><div class="flex space-x-2 mt-auto"><button class="exam-details-btn bg-gray-600 text-white font-semibold py-2 px-4 rounded-md flex-1">${translations.examDetails.title[currentLang]}</button><button class="view-colleges-btn bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md flex-1">${content.viewCollegesBtn[currentLang]}</button></div></div>`).join('')}</div></div>`;
+                container.innerHTML += categoryHtml;
+            });
+        };
+        const updateCollegeListingsViewText = (examId) => {
+            const content = translations.collegeListings;
+            document.getElementById('college-listings-title').innerText = `${content.title[currentLang]} ${translations.courseFinder.categories.find(cat => cat.exams.some(exam => exam.id === examId))?.exams.find(exam => exam.id === examId)?.name || examId}`;
+            document.getElementById('search-college').placeholder = content.searchPlaceholder[currentLang];
+            document.querySelector('label[for="search-college"]').innerText = content.searchLabel[currentLang];
+            const colleges = collegeData[examId] || [];
+            const cities = ['All Cities', ...new Set(colleges.map(c => c.city))];
+            const cityFilter = document.getElementById('city-filter');
+            cityFilter.innerHTML = cities.map(city => `<option value="${city}">${city === 'All Cities' ? content.allCities[currentLang] : city}</option>`).join('');
+            cityFilter.dataset.exam = examId;
+            
+            // Add Gemini AI button for MHT-CET
+            const container = document.getElementById('college-cards-container');
+            const geminiButton = document.createElement('div');
+            geminiButton.className = 'col-span-full mb-6';
+            
+            const isApiConfigured = GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY_HERE';
+            
+            geminiButton.innerHTML = `
+                <div class="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-lg shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-white font-bold text-lg">🤖 AI-Powered College Data</h3>
+                            <p class="text-purple-100 text-sm">
+                                ${isApiConfigured 
+                                    ? 'Get 150+ MHT-CET colleges with comprehensive cutoff data' 
+                                    : 'Configure your Gemini API key to enable AI-powered data updates'
+                                }
+                            </p>
+                        </div>
+                        <button id="fetch-gemini-colleges" class="bg-white text-purple-600 font-semibold px-6 py-2 rounded-lg hover:bg-purple-50 transition-colors ${!isApiConfigured ? 'opacity-50 cursor-not-allowed' : ''}">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                ${isApiConfigured ? 'Fetch 150+ Colleges' : 'API Key Required'}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Insert the button before the college cards
+            if (examId === 'mht-cet') {
+                container.parentNode.insertBefore(geminiButton, container);
+            }
+            
+            // Add AI Recommendation
+            const existingRecommendation = container.parentNode.querySelector('.ai-recommendation');
+            if (!existingRecommendation) {
+                addAIRecommendation(container.parentNode, examId);
+            }
+            
+            renderCollegeCards(colleges);
+        };
+        const updateExamDetailsViewText = (examId) => {
+            const content = translations.examDetails;
+            const exam = examDetails[examId];
+            if (!exam) return;
+            
+            document.getElementById('exam-details-title').innerText = `${content.title[currentLang]} - ${exam.name}`;
+            const container = document.getElementById('exam-details-content');
+            
+            container.innerHTML = `
+                <div class="white-card hover-lift">
+                    <h3 class="text-gradient text-2xl mb-6">${exam.fullName[currentLang]}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.eligibility[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.eligibility[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.examDate[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.examDate[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.applicationDeadline[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.applicationDeadline[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.examDuration[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.examDuration[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.totalQuestions[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.totalQuestions[currentLang]}</span>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.subjects[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.subjects[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.markingScheme[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.markingScheme[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.examMode[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.examMode[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.applicationFee[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.applicationFee[currentLang]}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">${content.resultDate[currentLang]}:</span>
+                                <span class="text-gray-600">${exam.resultDate[currentLang]}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="stats-card hover-lift">
+                        <h3>${exam.examPattern[currentLang]}</h3>
+                        <p>Exam Pattern</p>
+                    </div>
+                    <div class="stats-card hover-lift">
+                        <h3>${exam.difficultyLevel[currentLang]}</h3>
+                        <p>Difficulty Level</p>
+                    </div>
+                    <div class="stats-card hover-lift">
+                        <h3>${exam.totalSeats[currentLang]}</h3>
+                        <p>Total Seats</p>
+                    </div>
+                </div>
+                
+                <div class="white-card hover-lift">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">${content.preparationTips[currentLang]}</h3>
+                    <ul class="space-y-3">
+                        ${exam.preparationTips.map(tip => `
+                            <li class="flex items-start p-3 bg-gray-50 rounded-lg">
+                                <span class="text-indigo-600 mr-3 text-lg">•</span>
+                                <span class="text-gray-700">${tip[currentLang]}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <button class="view-colleges-from-details bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-8 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl" data-exam="${examId}">
+                        ${content.viewColleges[currentLang]}
+                    </button>
+                </div>
+            `;
+        };
+
+        function renderCollegeCards(colleges) {
+            const content = translations.collegeListings;
+            const container = document.getElementById('college-cards-container');
+            if (colleges.length === 0) { 
+                container.innerHTML = `<p class="text-gray-600 col-span-full text-center">No colleges found.</p>`; 
+                return; 
+            }
+            container.innerHTML = colleges.map(college => `
+                <div class="bg-white rounded-lg overflow-hidden flex flex-col college-card">
+                    <img src="${college.img}" alt="${college.name}" class="w-full h-40 object-cover">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h5 class="text-lg font-bold text-gray-900">${college.name}</h5>
+                        <p class="text-sm text-gray-500 mb-4">${college.city}</p>
+                        <div class="grid grid-cols-3 gap-2 text-center my-4 text-sm text-gray-700">
+                           <div><p class="font-bold text-indigo-600">${college.highestPkg}</p><p class="text-xs text-gray-500">${content.highestPackage[currentLang]}</p></div>
+                           <div><p class="font-bold text-indigo-600">${college.avgPkg}</p><p class="text-xs text-gray-500">${content.averagePackage[currentLang]}</p></div>
+                           <div><p class="font-bold text-indigo-600">${college.intake}</p><p class="text-xs text-gray-500">${content.intake[currentLang]}</p></div>
+                        </div>
+                        <button class="college-details-btn w-full mt-auto bg-indigo-600 text-white font-semibold py-2 rounded-md" data-college='${JSON.stringify(college)}'>${content.viewDetailsBtn[currentLang]}</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function showCollegeModal(college) {
+            const content = translations.collegeListings;
+            const modal = document.getElementById('college-modal');
+            const modalName = document.getElementById('modal-college-name');
+            const modalContent = document.getElementById('modal-college-content');
+            
+            modalName.innerText = college.name;
+            modalContent.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-6">
+                        <div>
+                            <img src="${college.img}" alt="${college.name}" class="w-full h-64 object-cover rounded-lg">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded">
+                                <p class="text-sm text-gray-600">${content.highestPackage[currentLang]}</p>
+                                <p class="font-bold text-lg text-indigo-600">${college.highestPkg}</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded">
+                                <p class="text-sm text-gray-600">${content.averagePackage[currentLang]}</p>
+                                <p class="font-bold text-lg text-indigo-600">${college.avgPkg}</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded">
+                                <p class="text-sm text-gray-600">${content.intake[currentLang]}</p>
+                                <p class="font-bold text-lg text-indigo-600">${college.intake}</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded">
+                                <p class="text-sm text-gray-600">${content.nirfRank[currentLang]}</p>
+                                <p class="font-bold text-lg text-indigo-600">${college.nirfRank}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <p><strong>${content.fees[currentLang]}:</strong> ${college.fees}</p>
+                            <p><strong>${content.cutoff[currentLang]}:</strong> ${college.cutoff}</p>
+                            <p><strong>${content.courses[currentLang]}:</strong> ${college.courses.join(', ')}</p>
+                            <p><strong>${content.website[currentLang]}:</strong> <a href="https://${college.website}" target="_blank" class="text-indigo-600 hover:underline">${college.website}</a></p>
+                            <p><strong>${content.phone[currentLang]}:</strong> <a href="tel:${college.phone}" class="text-indigo-600 hover:underline">${college.phone}</a></p>
+                        </div>
+                        
+                        <div>
+                            <p><strong>${content.address[currentLang]}:</strong></p>
+                            <p class="text-gray-600">${college.address}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">${content.cutoffTrends[currentLang]}</h4>
+                            <div class="overflow-x-auto">
+                                <table class="cutoff-table w-full">
+                                    <thead>
+                                        <tr>
+                                            <th>Course</th>
+                                            <th>2023</th>
+                                            <th>2022</th>
+                                            <th>2021</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${Object.entries(college.cutoffs).map(([course, years]) => {
+                                            const getCutoffClass = (value) => {
+                                                const num = parseInt(value);
+                                                if (num >= 95) return 'cutoff-high';
+                                                if (num >= 85) return 'cutoff-medium';
+                                                return 'cutoff-low';
+                                            };
+                                            return `
+                                                <tr>
+                                                    <td class="font-medium">${course}</td>
+                                                    <td><span class="cutoff-value ${getCutoffClass(years['2023'])}">${years['2023']}</span></td>
+                                                    <td><span class="cutoff-value ${getCutoffClass(years['2022'])}">${years['2022']}</span></td>
+                                                    <td><span class="cutoff-value ${getCutoffClass(years['2021'])}">${years['2021']}</span></td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">${content.feeStructure[currentLang]}</h4>
+                            <div class="space-y-2">
+                                ${Object.entries(college.feesBreakdown).map(([category, amount]) => `
+                                    <div class="flex justify-between items-center">
+                                        <span class="fees-category fees-${category.toLowerCase()}">${category}</span>
+                                        <span class="font-semibold">${amount}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">${content.hostelFacilities[currentLang]}</h4>
+                            <div class="space-y-2">
+                                ${Object.entries(college.hostel).map(([facility, details]) => `
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">${facility}:</span>
+                                        <span class="text-gray-600">${details}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">${content.placementStats[currentLang]}</h4>
+                            <div class="placement-stats">
+                                ${Object.entries(college.placement).map(([stat, value]) => `
+                                    <div class="placement-stat">
+                                        <h4 class="text-indigo-600">${value}</h4>
+                                        <p>${stat}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">${content.courseIntake[currentLang]}</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                ${Object.entries(college.intakeDetails).map(([course, seats]) => `
+                                    <div class="flex justify-between">
+                                        <span class="text-sm">${course}:</span>
+                                        <span class="font-semibold">${seats}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">${content.location[currentLang]}</h4>
+                            <div class="map-container" id="map-${college.name.replace(/\s+/g, '-')}">
+                                <div class="gemini-loading">
+                                    <div class="loading-spinner"></div>
+                                    ${content.loading[currentLang]}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">${content.viewOnMaps[currentLang]}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            
+            // Load Google Maps after modal is shown
+            setTimeout(() => {
+                loadGoogleMaps(college);
+            }, 100);
+        }
+        
+        function loadGoogleMaps(college) {
+            const mapContainer = document.getElementById(`map-${college.name.replace(/\s+/g, '-')}`);
+            if (!mapContainer) return;
+            
+            // Create a simple map placeholder with location info
+            mapContainer.innerHTML = `
+                <div class="bg-gray-100 p-4 rounded-lg h-full flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="text-2xl mb-2">📍</div>
+                        <p class="font-semibold text-gray-800">${college.name}</p>
+                        <p class="text-sm text-gray-600">${college.address}</p>
+                        <a href="https://www.google.com/maps/search/${encodeURIComponent(college.name + ' ' + college.address)}" 
+                           target="_blank" 
+                           class="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700">
+                            View on Google Maps
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Event Listeners & Page Logic ---
+        document.body.addEventListener('click', (e) => {
+            const navLink = e.target.closest('.nav-link');
+            if (navLink) { e.preventDefault(); const targetPath = navLink.getAttribute('href').substring(1); const [pageId, subtargetId] = targetPath.split('/'); showPage(pageId || 'index'); if (subtargetId) { showAuthSection(subtargetId); } }
+            const dashboardNavLink = e.target.closest('.dashboard-nav-link');
+            if (dashboardNavLink) { e.preventDefault(); const examId = dashboardNavLink.dataset.exam || null; showDashboardView(dashboardNavLink.dataset.target, examId); }
+            
+            // Exam details button
+            const examDetailsBtn = e.target.closest('.exam-details-btn');
+            if (examDetailsBtn) {
+                e.preventDefault();
+                const examId = examDetailsBtn.closest('.exam-card').dataset.exam;
+                showDashboardView('exam-details', examId);
+            }
+            
+            // View colleges button
+            const viewCollegesBtn = e.target.closest('.view-colleges-btn');
+            if (viewCollegesBtn) {
+                e.preventDefault();
+                const examId = viewCollegesBtn.closest('.exam-card').dataset.exam;
+                showDashboardView('college-listings', examId);
+            }
+            
+            // View colleges from details
+            const viewCollegesFromDetails = e.target.closest('.view-colleges-from-details');
+            if (viewCollegesFromDetails) {
+                e.preventDefault();
+                const examId = viewCollegesFromDetails.dataset.exam;
+                showDashboardView('college-listings', examId);
+            }
+            
+            // College details button
+            const collegeDetailsBtn = e.target.closest('.college-details-btn');
+            if (collegeDetailsBtn) {
+                e.preventDefault();
+                const collegeData = JSON.parse(collegeDetailsBtn.dataset.college);
+                const examId = document.getElementById('city-filter')?.dataset.exam || 'mht-cet';
+                
+                // Show loading state
+                collegeDetailsBtn.innerHTML = '<div class="loading-spinner"></div> Loading...';
+                collegeDetailsBtn.disabled = true;
+                
+                // Fetch real-time data and show modal
+                updateCollegeWithRealTimeData(collegeData, examId).then(updatedCollege => {
+                    showCollegeModal(updatedCollege);
+                    // Reset button
+                    collegeDetailsBtn.innerHTML = content.viewDetailsBtn[currentLang];
+                    collegeDetailsBtn.disabled = false;
+                });
+            }
+            
+            // Close modal
+            const closeModal = e.target.closest('#close-modal');
+            if (closeModal) {
+                e.preventDefault();
+                document.getElementById('college-modal').classList.add('hidden');
+            }
+            
+            // Gemini AI fetch button
+            const geminiButton = e.target.closest('#fetch-gemini-colleges');
+            if (geminiButton) {
+                e.preventDefault();
+                if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+                    showNotification('Please configure your Gemini API key first. Check the README for setup instructions.', 'error');
+                    return;
+                }
+                updateMHTCollegesWithGemini();
+            }
+        });
+        
+        // College search functionality
+        document.getElementById('search-college').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const examId = document.getElementById('city-filter').dataset.exam;
+            const allColleges = collegeData[examId] || [];
+            const selectedCity = document.getElementById('city-filter').value;
+            
+            let filteredColleges = allColleges;
+            
+            // Filter by city first
+            if (selectedCity !== 'All Cities') {
+                filteredColleges = filteredColleges.filter(c => c.city === selectedCity);
+            }
+            
+            // Then filter by search term
+            if (searchTerm) {
+                filteredColleges = filteredColleges.filter(c => 
+                    c.name.toLowerCase().includes(searchTerm) ||
+                    c.city.toLowerCase().includes(searchTerm) ||
+                    c.courses.some(course => course.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderCollegeCards(filteredColleges);
+        });
+        
+        // City filter functionality
+        document.getElementById('city-filter').addEventListener('change', (e) => {
+            const selectedCity = e.target.value;
+            const examId = e.target.dataset.exam;
+            const searchTerm = document.getElementById('search-college').value.toLowerCase();
+            const allColleges = collegeData[examId] || [];
+            
+            let filteredColleges = allColleges;
+            
+            // Filter by city
+            if (selectedCity !== 'All Cities') {
+                filteredColleges = filteredColleges.filter(c => c.city === selectedCity);
+            }
+            
+            // Then filter by search term
+            if (searchTerm) {
+                filteredColleges = filteredColleges.filter(c => 
+                    c.name.toLowerCase().includes(searchTerm) ||
+                    c.city.toLowerCase().includes(searchTerm) ||
+                    c.courses.some(course => course.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderCollegeCards(filteredColleges);
+        });
+        
+        window.addEventListener('popstate', () => { const hash = window.location.hash.substring(1) || 'index'; const [pageId, subtargetId] = hash.split('/'); showPage(pageId || 'index'); if(pageId === 'auth') { showAuthSection(subtargetId || 'auth-choice-section'); } else if (pageId === 'dashboard') { showDashboardView(subtargetId || 'main-dashboard'); } });
+        const scrollElements = document.querySelectorAll(".scroll-animation"); const elementInView = (el) => el.getBoundingClientRect().top <= (window.innerHeight || document.documentElement.clientHeight); const handleScrollAnimation = () => scrollElements.forEach((el) => { if (elementInView(el)) el.classList.add("animate"); }); window.addEventListener("scroll", handleScrollAnimation);
+        const ctx = canvas.getContext('2d'); let particlesArray;
+        function initCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; particlesArray = []; let num = (canvas.height * canvas.width) / 9000; for(let i=0; i<num; i++) { particlesArray.push({ x:Math.random()*innerWidth, y:Math.random()*innerHeight, dX:(Math.random()*.4)-.2, dY:(Math.random()*.4)-.2, s:(Math.random()*2)+1 }); } }
+        function animateCanvas() { requestAnimationFrame(animateCanvas); ctx.clearRect(0,0,innerWidth,innerHeight); for(let i=0; i<particlesArray.length; i++) { let p = particlesArray[i]; if(p.x>canvas.width||p.x<0){p.dX=-p.dX;} if(p.y>canvas.height||p.y<0){p.dY=-p.dY;} p.x+=p.dX; p.y+=p.dY; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fillStyle='#8A8A8A'; ctx.fill(); } for (let a=0; a<particlesArray.length; a++) { for (let b=a; b<particlesArray.length; b++) { let dist = ((particlesArray[a].x-particlesArray[b].x)**2)+((particlesArray[a].y-particlesArray[b].y)**2); if (dist < (canvas.width/7)*(canvas.height/7)) { ctx.strokeStyle='rgba(140,140,140,'+(1-(dist/20000))+')'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(particlesArray[a].x, particlesArray[a].y); ctx.lineTo(particlesArray[b].x, particlesArray[b].y); ctx.stroke(); } } } }
+        window.addEventListener('resize', () => initCanvas());
+        
+        // --- INITIALIZATION ---
+        setupLanguageSwitchers(); 
+        const hash = window.location.hash.substring(1) || 'index'; 
+        const [pageId, subtargetId] = hash.split('/'); 
+        if (pageId === 'dashboard' && subtargetId) { activeDashboardView = subtargetId; } 
+        showPage(pageId || 'index'); 
+        if (pageId === 'auth') { showAuthSection(subtargetId || 'auth-choice-section'); } 
+        else if (pageId === 'dashboard') { showDashboardView(subtargetId || 'main-dashboard'); } 
+        initCanvas(); 
+        animateCanvas();
+
+        document.querySelectorAll('.auth-switcher').forEach(btn => btn.addEventListener('click', () => showAuthSection(btn.dataset.target)));
+        document.querySelectorAll('.password-toggle').forEach(btn => { btn.innerHTML = eyeIcon; btn.addEventListener('click', (e) => { const input = e.currentTarget.previousElementSibling; if (input.type === 'password') { input.type = 'text'; e.currentTarget.innerHTML = eyeSlashIcon; } else { input.type = 'password'; e.currentTarget.innerHTML = eyeIcon; } }); });
+        const signUpPassInput = document.querySelector('#sign-up-form input[name="password"]'); const confirmPassInput = document.querySelector('#sign-up-form input[name="confirm_password"]'); const strengthMeter = document.querySelector('.password-strength-meter'); const strengthText = document.getElementById('password-strength-text'); const matchError = document.getElementById('password-match-error'); let passwordStrengthScore = 0;
+        signUpPassInput.addEventListener('input', () => { const pass = signUpPassInput.value; let score = 0; if (pass.length >= 8) score++; if (/[A-Z]/.test(pass)) score++; if (/[a-z]/.test(pass)) score++; if (/\d/.test(pass)) score++; if (/[^A-Za-z0-9]/.test(pass)) score++; passwordStrengthScore = score; const bars = strengthMeter.children; const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#22c55e']; const levels = translations.auth.passStrength; const levelKeys = ['weak', 'weak', 'fair', 'good', 'strong']; for (let i = 0; i < bars.length; i++) { bars[i].style.backgroundColor = i < score ? colors[score-1] || '#ef4444' : '#374151'; } strengthText.innerText = pass.length > 0 ? (levels[levelKeys[score - 1]]?.[currentLang] || '') : ''; validatePasswordMatch(); });
+        confirmPassInput.addEventListener('input', validatePasswordMatch);
+        function validatePasswordMatch() { matchError.classList.toggle('hidden', confirmPassInput.value === '' || signUpPassInput.value === confirmPassInput.value); }
+        document.querySelectorAll('.auth-flow-form').forEach(form => { form.addEventListener('submit', e => { e.preventDefault(); showAuthSection(form.dataset.target); }); });
+        document.getElementById('personal-info-form').addEventListener('submit', e => { e.preventDefault(); showPage('dashboard'); });
+        
+        // Update dashboard view logic to handle exam details
+        function showDashboardView(viewId, context = null) { 
+            document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active')); 
+            const targetView = document.getElementById(`view-${viewId}`); 
+            if(targetView) { 
+                targetView.classList.add('active'); 
+            } 
+            activeDashboardView = viewId; 
+            updateDashboardPageText(context); 
+            
+            // Handle exam details view
+            if (viewId === 'exam-details' && context) {
+                updateExamDetailsViewText(context);
+            }
+        }
+
+        // Initialize AI Chat Assistant
+        initAIChat();
+    });
+    </script>
+</body>
+</html>

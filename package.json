@@ -1,0 +1,37 @@
+{
+  "name": "admitai-website",
+  "version": "1.0.0",
+  "description": "AI-powered college admission and exam preparation platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "python": "python -m http.server 8000",
+    "build": "echo 'No build process needed for static site'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "college-admissions",
+    "exam-preparation",
+    "ai-assistant",
+    "education",
+    "mht-cet",
+    "jee-mains",
+    "bitsat"
+  ],
+  "author": "AdmitAI Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/admitai-website.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/admitai-website/issues"
+  },
+  "homepage": "https://admitai.com"
+}
