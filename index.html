@@ -361,6 +361,7 @@
             </div>
             <div class="ai-chat-input">
                 <input type="text" id="ai-chat-input" placeholder="Ask me anything...">
+                <button id="ai-chat-voice" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700" title="Voice Input">🎤</button>
                 <button id="ai-chat-send">Send</button>
             </div>
         </div>
@@ -978,6 +979,43 @@
     // Gemini API configuration
     const GEMINI_API_KEY = 'AIzaSyC-2jr4RlBvKWW8sdjdGjJBQ1ujHR-D2Xs'; // Replace with your actual API key
     const GEMINI_API_URL =`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyC-2jr4RlBvKWW8sdjdGjJBQ1ujHR-D2Xs`;
+    
+    // Tech Stack Status
+    let techStackStatus = {};
+
+    async function checkTechStackStatus() {
+        try {
+            const response = await fetch('/api/tech-stack-status');
+            if (response.ok) {
+                techStackStatus = await response.json();
+                updateTechStackUI();
+            }
+        } catch (error) {
+            console.log('Tech stack status check failed:', error);
+        }
+    }
+
+    function updateTechStackUI() {
+        // Update AI status
+        const aiStatusDiv = document.getElementById('ai-status-alert');
+        if (aiStatusDiv) {
+            if (techStackStatus.ai_services?.preferred_provider) {
+                aiStatusDiv.className = "bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-lg";
+                const messageElement = aiStatusDiv.querySelector('#ai-status-message');
+                if (messageElement) {
+                    messageElement.textContent = `🤖 AI Assistant is active using ${techStackStatus.ai_services.preferred_provider.toUpperCase()}! Ask me about colleges, cutoffs, fees, and admission guidance.`;
+                }
+            }
+        }
+    }
+
+    function getStatusIndicator(status) {
+        return status ? '<span class="text-green-500">●</span>' : '<span class="text-red-500">●</span>';
+    }
+
+    async function refreshTechStack() {
+        await checkTechStackStatus();
+    }
 -
     async function callGeminiAPI(prompt) {
         // Check if API key is properly configured
@@ -1210,6 +1248,118 @@
                 sendMessage();
             }
         });
+        
+        // Voice input functionality
+        const voiceButton = document.getElementById('ai-chat-voice');
+        let recognition = null;
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-IN';
+            recognition.interimResults = false;
+            
+            voiceButton.addEventListener('click', () => {
+                if (recognition) {
+                    voiceButton.textContent = '🔴';
+                    voiceButton.disabled = true;
+                    recognition.start();
+                }
+            });
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                voiceButton.textContent = '🎤';
+                voiceButton.disabled = false;
+            };
+            
+            recognition.onerror = () => {
+                voiceButton.textContent = '🎤';
+                voiceButton.disabled = false;
+            };
+            
+            recognition.onend = () => {
+                voiceButton.textContent = '🎤';
+                voiceButton.disabled = false;
+            };
+        } else {
+            voiceButton.style.display = 'none';
+        }
+        
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            addMessageToChat(message, 'user');
+            chatInput.value = '';
+            
+            const typingMessage = addMessageToChat('AI is thinking...', 'ai', true);
+            
+            try {
+                // Use the backend API for AI responses
+                const response = await fetch('/chatbot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    typingMessage.remove();
+                    const aiMessageDiv = addMessageToChat(data.response, 'ai');
+                    
+                    // Add text-to-speech button for AI responses
+                    const speakButton = document.createElement('button');
+                    speakButton.className = 'mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600';
+                    speakButton.textContent = '🔊 Listen';
+                    speakButton.onclick = () => speakText(data.response);
+                    aiMessageDiv.appendChild(speakButton);
+                } else {
+                    typingMessage.textContent = 'Sorry, I encountered an error. Please try again.';
+                    typingMessage.classList.remove('typing');
+                }
+            } catch (error) {
+                console.error('Chat error:', error);
+                typingMessage.textContent = 'Sorry, I encountered an error. Please try again.';
+                typingMessage.classList.remove('typing');
+            }
+        }
+        
+        async function speakText(text) {
+            try {
+                // Try using ElevenLabs via our backend first
+                const response = await fetch('/api/voice/text-to-speech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text.substring(0, 500) }) // Limit text length
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.audio_url) {
+                        const audio = new Audio(data.audio_url);
+                        audio.play();
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('TTS service not available, using browser TTS');
+            }
+            
+            // Fallback to browser's speech synthesis
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-IN';
+                utterance.rate = 0.9;
+                speechSynthesis.speak(utterance);
+            }
+        }
     }
 
     async function getAIResponse(message) {
@@ -1939,6 +2089,11 @@
 
         // Initialize AI Chat Assistant
         initAIChat();
+        
+        // Check tech stack status
+        if (activePage === 'dashboard') {
+            checkTechStackStatus();
+        }
     });
     </script>
 </body>
