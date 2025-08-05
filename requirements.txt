@@ -6,4 +6,12 @@ requests==2.31.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
 Pillow
-pymongo==4.6.1 
+pymongo==4.6.1
+
+# AI and Voice Services
+openai==1.51.2
+boto3==1.35.0
+botocore==1.35.0
+
+# Additional dependencies for tech stack integration
+twilio==8.2.0 

@@ -6,17 +6,19 @@ from werkzeug.utils import secure_filename
 import os
 import json
 import requests
+import logging
 from datetime import datetime
-# import pandas as pd
-# from sklearn.ensemble import RandomForestRegressor
-# import numpy as np
-# import pytesseract
 from PIL import Image
 import io
 import base64
-# import schedule
-# import threading
-# import time
+
+# Import our new service modules
+from config import Config, config
+from ai_services import ai_service
+from voice_ai_services import voice_ai_service
+from workflow_automation import workflow_manager
+from aws_integration import aws_manager
+
 try:
     import pymongo
     from mongodb_integration import get_college_cutoffs, get_mongodb_connection
@@ -26,11 +28,18 @@ except ImportError:
     MONGODB_AVAILABLE = False
     print("MongoDB not available - using fallback data")
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///college_finder.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def create_app(config_name='default'):
+    """Application factory pattern"""
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+    
+    return app
+
+app = create_app(os.environ.get('FLASK_ENV', 'default'))
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -162,53 +171,16 @@ class ImportantDate(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# AI Configuration
-GEMINI_API_KEY = 'AIzaSyC-2jr4RlBvKWW8sdjdGjJBQ1ujHR-D2Xs'
+# AI Configuration - Using our new AI service manager
+GEMINI_API_KEY = app.config.get('GEMINI_API_KEY', 'AIzaSyC-2jr4RlBvKWW8sdjdGjJBQ1ujHR-D2Xs')
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 
 def call_gemini_api(prompt):
-    """Call Gemini API for AI responses"""
-    try:
-        headers = {
-            'Content-Type': 'application/json',
-        }
-        
-        data = {
-            "contents": [{
-                "parts": [{
-                    "text": prompt
-                }]
-            }],
-            "generationConfig": {
-                "temperature": 0.7,
-                "topK": 40,
-                "topP": 0.95,
-                "maxOutputTokens": 2048
-            }
-        }
-        
-        response = requests.post(
-            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-            headers=headers,
-            json=data
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            if 'candidates' in result and len(result['candidates']) > 0:
-                return result['candidates'][0]['content']['parts'][0]['text']
-            else:
-                print(f"Unexpected API response structure: {result}")
-        else:
-            print(f"API error: {response.status_code} - {response.text}")
-        
-        return None
-    except Exception as e:
-        print(f"Error calling Gemini API: {e}")
-        return None
+    """Call Gemini API for AI responses - Legacy function for backward compatibility"""
+    return ai_service.get_chat_response(prompt)
 
 def fetch_college_data_from_gemini(college_name):
-    """Fetch detailed college information from Gemini API"""
+    """Fetch detailed college information from AI API"""
     prompt = f"""Provide detailed information about {college_name} engineering college in India. Include:
     1. Location and contact details
     2. NIRF ranking (if available)
@@ -221,10 +193,10 @@ def fetch_college_data_from_gemini(college_name):
     
     Format the response as structured data that can be easily parsed."""
     
-    return call_gemini_api(prompt)
+    return ai_service.get_chat_response(prompt)
 
 def generate_college_recommendations_with_ai(percentile, category, budget=None, preferred_branches=None):
-    """Generate AI-powered college recommendations using Gemini"""
+    """Generate AI-powered college recommendations"""
     prompt = f"""Based on the following criteria, recommend engineering colleges in India:
     - Percentile: {percentile}
     - Category: {category}
@@ -241,7 +213,7 @@ def generate_college_recommendations_with_ai(percentile, category, budget=None, 
     
     Focus on realistic options based on the percentile and category."""
     
-    return call_gemini_api(prompt)
+    return ai_service.get_chat_response(prompt)
 
 # AI Models
 class CollegeRecommender:
@@ -751,7 +723,7 @@ def save_college(college_id):
 @app.route('/chatbot', methods=['POST'])
 @login_required
 def chatbot():
-    """Enhanced AI chatbot endpoint with real-time responses and MongoDB integration"""
+    """Enhanced AI chatbot endpoint with multi-provider support"""
     message = request.json.get('message', '')
     
     # Get user context
@@ -769,110 +741,183 @@ def chatbot():
                 mongo_colleges = list(collection.find().limit(10))
         except Exception as e:
             print(f"Error fetching MongoDB data: {e}")
-    else:
-        # Fallback data when MongoDB is not available
-        mongo_colleges = [
-            {
-                "collegeName": "College of Engineering Pune (COEP)",
-                "status": "Autonomous",
-                "courses": [
-                    {
-                        "courseName": "Computer Science and Engineering",
-                        "seatTypes": {
-                            "stateLevel": {
-                                "GOPENS": {"meritNo": "100", "meritPercentile": "99.96"},
-                                "GSCS": {"meritNo": "2500", "meritPercentile": "99.20"},
-                                "GOBCS": {"meritNo": "300", "meritPercentile": "99.90"}
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "collegeName": "Veermata Jijabai Technological Institute (VJTI)",
-                "status": "Government-Aided Autonomous",
-                "courses": [
-                    {
-                        "courseName": "Computer Engineering",
-                        "seatTypes": {
-                            "stateLevel": {
-                                "GOPENS": {"meritNo": "103", "meritPercentile": "99.95"},
-                                "GSCS": {"meritNo": "3385", "meritPercentile": "98.98"},
-                                "GOBCS": {"meritNo": "468", "meritPercentile": "99.82"}
-                            }
-                        }
-                    }
-                ]
+    
+    # Create context for AI service
+    context = {
+        "user_category": user_category,
+        "saved_colleges": saved_college_names,
+        "mongo_colleges": mongo_colleges[:5]  # Limit for performance
+    }
+    
+    # Get response using our AI service manager
+    response = ai_service.get_chat_response(message, context)
+    
+    # Track interaction using workflow automation
+    if workflow_manager.get_automation_status()['automation_enabled']:
+        try:
+            user_data = {
+                "id": current_user.id,
+                "category": current_user.category,
+                "city": getattr(current_user, 'city', 'Unknown')
             }
-        ]
+            interaction_data = {
+                "type": "chatbot_query",
+                "page": "chatbot",
+                "action": "message_sent",
+                "data": {"message_length": len(message), "response_length": len(response) if response else 0}
+            }
+            workflow_manager.track_user_interaction(user_data, interaction_data)
+        except Exception as e:
+            logger.warning(f"Failed to track interaction: {e}")
     
-    # Get recent college data for context
-    recent_colleges = College.query.limit(5).all()
-    college_context = "\n".join([f"- {c.name} ({c.city})" for c in recent_colleges])
+    return jsonify({'response': response or "I'm sorry, I couldn't process your request right now. Please try again."})
+
+# New API endpoints for tech stack integrations
+
+@app.route('/api/tech-stack-status')
+@login_required
+def get_tech_stack_status():
+    """Get status of all integrated tech stack services"""
+    status = {
+        "ai_services": ai_service.get_service_status(),
+        "voice_ai": voice_ai_service.get_voice_service_status(),
+        "automation": workflow_manager.get_automation_status(),
+        "aws": aws_manager.get_aws_status(),
+        "app_version": app.config.get('APP_VERSION', '2.0.0')
+    }
     
-    # Add MongoDB college data to context
-    mongo_context = ""
-    if mongo_colleges:
-        mongo_context = "\nMongoDB College Data:\n"
-        for college in mongo_colleges:
-            mongo_context += f"- {college['collegeName']} ({college['status']})\n"
-            for course in college.get('courses', []):
-                mongo_context += f"  * {course['courseName']}\n"
+    return jsonify(status)
+
+@app.route('/api/voice/text-to-speech', methods=['POST'])
+@login_required
+def text_to_speech():
+    """Convert text to speech using ElevenLabs"""
+    text = request.json.get('text', '')
+    voice_id = request.json.get('voice_id', 'default')
     
-    # Create enhanced context-aware prompt with the provided API key
-    prompt = f"""You are AdmitAI, an intelligent college admission assistant with access to real-time college data and MongoDB database with detailed cutoff information.
-
-User Profile:
-- Category: {user_category}
-- Saved Colleges: {', '.join(saved_college_names) if saved_college_names else 'None'}
-
-Available College Context (SQLite):
-{college_context}
-
-MongoDB College Data with Cutoffs:
-{mongo_context}
-
-User Question: {message}
-
-Provide a comprehensive, helpful response that:
-1. Addresses the specific question directly
-2. Uses the user's category context when relevant
-3. References their saved colleges if applicable
-4. Provides actionable advice and next steps
-5. Includes relevant statistics and data when available
-6. Suggests related topics they might be interested in
-7. Uses MongoDB cutoff data when discussing specific colleges
-8. Provides specific percentile and merit number information when available
-
-Focus areas:
-- College admissions and cutoffs (with specific percentile guidance from MongoDB data)
-- Exam preparation strategies and tips
-- Document requirements and verification
-- Important dates and deadlines
-- Fee structures and scholarship opportunities
-- Placement statistics and career guidance
-- College comparison and selection advice
-- OCR and document verification processes
-
-Current year: 2025. Be encouraging but realistic in your advice. Use the MongoDB cutoff data to provide specific, accurate information about college admissions."""
-
-    response = call_gemini_api(prompt)
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
     
-    if not response:
-        # Enhanced fallback response with MongoDB data
-        fallback_response = f"I'm sorry, I couldn't process your request right now. However, based on your {user_category} category, I can help you with:"
-        fallback_response += "\n\n1. **College Cutoffs**: I have access to detailed cutoff data for top colleges including COEP, VJTI, SPIT, PICT, and more."
-        fallback_response += "\n\n2. **Course Information**: Computer Science, Computer Engineering, Information Technology, and other branches."
-        fallback_response += "\n\n3. **Category-specific guidance**: Based on your {user_category} category, I can provide targeted advice."
-        fallback_response += "\n\nTry asking specific questions like:"
-        fallback_response += "\n- 'What are the cutoffs for COEP Computer Science?'"
-        fallback_response += "\n- 'Show me colleges for my category'"
-        fallback_response += "\n- 'What documents do I need for admission?'"
-        fallback_response += "\n- 'Tell me about exam preparation'"
+    audio_data = ai_service.generate_voice_response(text, voice_id)
+    
+    if audio_data:
+        # Save audio file temporarily or upload to S3
+        filename = f"voice_{current_user.id}_{datetime.utcnow().timestamp()}.mp3"
         
-        response = fallback_response
+        if aws_manager.get_aws_status()['s3_available']:
+            # Upload to S3
+            url = aws_manager.upload_to_s3(
+                audio_data, 
+                'admitai-voice-files', 
+                filename, 
+                'audio/mpeg'
+            )
+            return jsonify({'audio_url': url})
+        else:
+            # Save locally
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            with open(filepath, 'wb') as f:
+                f.write(audio_data)
+            return jsonify({'audio_url': f'/uploads/{filename}'})
+    else:
+        return jsonify({'error': 'Text-to-speech service not available'}), 503
+
+@app.route('/api/voice/create-assistant', methods=['POST'])
+@login_required
+def create_voice_assistant():
+    """Create a voice assistant using available providers"""
+    config_data = request.json
     
-    return jsonify({'response': response})
+    assistant = voice_ai_service.create_voice_assistant(config_data)
+    
+    if assistant:
+        return jsonify({'success': True, 'assistant': assistant})
+    else:
+        return jsonify({'error': 'Voice assistant service not available'}), 503
+
+@app.route('/api/voice/start-call', methods=['POST'])
+@login_required
+def start_voice_call():
+    """Start a voice call using available providers"""
+    phone_number = request.json.get('phone_number')
+    assistant_id = request.json.get('assistant_id')
+    
+    if not phone_number:
+        return jsonify({'error': 'Phone number is required'}), 400
+    
+    call_result = voice_ai_service.start_voice_call(phone_number, assistant_id)
+    
+    if call_result:
+        return jsonify({'success': True, 'call': call_result})
+    else:
+        return jsonify({'error': 'Voice call service not available'}), 503
+
+@app.route('/api/workflow/trigger', methods=['POST'])
+@login_required
+def trigger_workflow():
+    """Trigger workflow automation"""
+    workflow_type = request.json.get('workflow_type')
+    data = request.json.get('data', {})
+    
+    if not workflow_type:
+        return jsonify({'error': 'Workflow type is required'}), 400
+    
+    # Add user context to workflow data
+    data['user_id'] = current_user.id
+    data['user_category'] = current_user.category
+    
+    result = workflow_manager.trigger_workflow(workflow_type, data)
+    
+    if result:
+        return jsonify({'success': True, 'result': result})
+    else:
+        return jsonify({'error': 'Workflow automation not available'}), 503
+
+@app.route('/api/notifications/send', methods=['POST'])
+@login_required
+def send_notification():
+    """Send notification through available channels"""
+    notification_type = request.json.get('type')
+    message = request.json.get('message')
+    recipients = request.json.get('recipients', [])
+    
+    if not all([notification_type, message]):
+        return jsonify({'error': 'Type and message are required'}), 400
+    
+    success = False
+    
+    if notification_type == 'email' and aws_manager.get_aws_status()['ses_available']:
+        success = aws_manager.send_email_notification(
+            recipients, 
+            'AdmitAI Notification', 
+            message
+        )
+    elif notification_type == 'sms' and aws_manager.get_aws_status()['sns_available']:
+        for phone in recipients:
+            success = aws_manager.send_sms_notification(phone, message)
+    elif notification_type == 'workflow':
+        user_data = {'name': current_user.name, 'email': current_user.email}
+        notification_data = {'message': message, 'type': notification_type}
+        success = workflow_manager.send_admission_notification(user_data, notification_data)
+    
+    return jsonify({'success': success})
+
+@app.route('/api/aws/deploy', methods=['POST'])
+@login_required
+def deploy_to_aws():
+    """Deploy application to AWS (admin only)"""
+    # Check if user has admin privileges (implement your own logic)
+    if not getattr(current_user, 'is_admin', False):
+        return jsonify({'error': 'Admin privileges required'}), 403
+    
+    stack_name = request.json.get('stack_name', 'AdmitAI-Stack')
+    
+    success = aws_manager.deploy_to_aws(stack_name)
+    
+    if success:
+        return jsonify({'success': True, 'message': 'Deployment initiated'})
+    else:
+        return jsonify({'error': 'AWS deployment failed'}), 500
 
 # API Routes for Document Management
 @app.route('/api/document/<int:doc_id>')
